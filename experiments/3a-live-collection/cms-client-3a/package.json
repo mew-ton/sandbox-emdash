@@ -1,0 +1,15 @@
+{
+  "name": "cms-client",
+  "version": "0.1.0-3a",
+  "private": true,
+  "description": "Item 3a experiment: the contract implemented on getEmDashCollection()",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "files": ["src"],
+  "peerDependencies": {
+    "emdash": "1.3.1"
+  },
+  "dependencies": {
+    "@portabletext/to-html": "6.0.0"
+  }
+}

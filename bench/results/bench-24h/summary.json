@@ -1,0 +1,22 @@
+{
+  "project": "bench-24h",
+  "memLimit": "350m",
+  "memswap": "350m",
+  "variant": "standard",
+  "nodeOptions": "",
+  "phases": {
+    "4-6 long idle": {
+      "samples": 2688,
+      "durationS": 2704,
+      "peakVmRssMiB": 130.4,
+      "peakVmHwmMiB": 130.4,
+      "peakDockerStatsMiB": 72.3,
+      "peakSwapMiB": 0,
+      "steadyVmRssMiB": 126.3,
+      "steadyDockerStatsMiB": 67.9,
+      "oomKills": 0,
+      "vmrssSlopeMiBPerHour": 0.51,
+      "note": "stopped manually after 0.76 h of the planned 24 h"
+    }
+  }
+}

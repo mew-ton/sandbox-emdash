@@ -1,0 +1,32 @@
+---
+import { fetchArticle, type Article } from "cms-client";
+import { allArticles } from "../../lib/all";
+import { localImage, localizeHtml } from "../../lib/images";
+
+export async function getStaticPaths() {
+	return (await allArticles()).map((article) => ({ params: { id: article.id }, props: { article } }));
+}
+
+const { article } = Astro.props as { article: Article };
+// Single-entry fetch is exercised too, and must agree with the list.
+const single = await fetchArticle(article.id);
+if (single.updatedAt !== article.updatedAt) throw new Error(`list/detail mismatch for ${article.id}`);
+const hero = await localImage(article.heroImageUrl);
+const body = await localizeHtml(article.bodyHtml);
+---
+<html lang="ja">
+	<head>
+		<meta charset="utf-8" />
+		<title>{article.title}</title>
+		<meta name="description" content={article.description} />
+		<meta name="keywords" content={article.keywords.join(",")} />
+	</head>
+	<body data-theme={article.themeColor ?? "none"}>
+		<article>
+			<h1>{article.title}</h1>
+			{hero && <figure><img src={hero} alt={article.heroImageAlt} />{article.heroImageLabel && <figcaption>{article.heroImageLabel}</figcaption>}</figure>}
+			<p><time datetime={article.publishedAt}>{article.publishedAt}</time> (updated {article.updatedAt})</p>
+			<div set:html={body} />
+		</article>
+	</body>
+</html>

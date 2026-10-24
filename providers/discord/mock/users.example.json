@@ -1,0 +1,6 @@
+[
+  { "id": "200000000000000001", "username": "leader", "email": "leader@example.com", "verified": true, "member": true, "roles": ["300000000000000002"] },
+  { "id": "200000000000000002", "username": "member", "email": "member@example.com", "verified": true, "member": true, "roles": ["300000000000000001"] },
+  { "id": "200000000000000003", "username": "outsider", "email": "outsider@example.com", "verified": true, "member": false, "roles": [] },
+  { "id": "200000000000000004", "username": "no-role", "email": "norole@example.com", "verified": true, "member": true, "roles": [] }
+]

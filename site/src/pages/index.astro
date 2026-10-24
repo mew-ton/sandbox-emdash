@@ -1,0 +1,15 @@
+---
+import { fetchArticles } from "cms-client";
+
+const latest = await fetchArticles({ page: 1, perPage: 3, sort: "-publishedAt" });
+---
+<html lang="ja">
+	<head><meta charset="utf-8" /><title>Sandbox site</title></head>
+	<body>
+		<h1>Latest articles</h1>
+		<ul>
+			{latest.items.map((a) => <li><a href={`/articles/${a.id}/`}>{a.title}</a></li>)}
+		</ul>
+		<p><a href="/articles/page/1/">All articles ({latest.totalItems})</a> · <a href="/casts/">Casts</a></p>
+	</body>
+</html>

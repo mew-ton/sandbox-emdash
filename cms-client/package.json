@@ -1,0 +1,33 @@
+{
+  "name": "cms-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Boundary package between the CMS and the public site: domain types and fetch functions",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "gen": "node scripts/generate-types.mjs",
+    "pack:site": "pnpm build && pnpm pack --pack-destination ../site/vendor"
+  },
+  "dependencies": {
+    "@portabletext/to-html": "6.0.0"
+  },
+  "devDependencies": {
+    "emdash": "1.3.1",
+    "openapi-typescript": "7.13.0",
+    "tsdown": "0.23.0",
+    "typescript": "5.9.3"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.16"
+  }
+}

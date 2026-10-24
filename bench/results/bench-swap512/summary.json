@@ -1,0 +1,148 @@
+{
+  "project": "bench-swap512",
+  "memLimit": "350m",
+  "memswap": "862m",
+  "variant": "standard",
+  "nodeOptions": "",
+  "phases": {
+    "4-1 boot+setup": {
+      "samples": 2,
+      "durationS": 1,
+      "peakVmRssMiB": 132.9,
+      "peakVmHwmMiB": 132.9,
+      "peakDockerStatsMiB": 74.7,
+      "peakSwapMiB": 0,
+      "steadyVmRssMiB": 126.5,
+      "steadyDockerStatsMiB": 68.3,
+      "oomKills": 0
+    },
+    "4-1 idle": {
+      "samples": 593,
+      "durationS": 599,
+      "peakVmRssMiB": 133.9,
+      "peakVmHwmMiB": 134.3,
+      "peakDockerStatsMiB": 75.7,
+      "peakSwapMiB": 0,
+      "steadyVmRssMiB": 125,
+      "steadyDockerStatsMiB": 66.7,
+      "oomKills": 0
+    },
+    "4-2 editing": {
+      "samples": 1794,
+      "durationS": 1802,
+      "peakVmRssMiB": 213.4,
+      "peakVmHwmMiB": 215.7,
+      "peakDockerStatsMiB": 159.8,
+      "peakSwapMiB": 0,
+      "steadyVmRssMiB": 208,
+      "steadyDockerStatsMiB": 154.2,
+      "oomKills": 0,
+      "requests": 15073,
+      "errors": 18,
+      "byStatus": {
+        "200": 14713,
+        "201": 342,
+        "409": 18
+      }
+    },
+    "4-3 upload": {
+      "samples": 11,
+      "durationS": 10,
+      "peakVmRssMiB": 288.8,
+      "peakVmHwmMiB": 288.8,
+      "peakDockerStatsMiB": 236.5,
+      "peakSwapMiB": 0,
+      "steadyVmRssMiB": 244.4,
+      "steadyDockerStatsMiB": 191.6,
+      "oomKills": 0,
+      "fileBytes": 5247669,
+      "uploadMs": [
+        1489,
+        510,
+        463,
+        432,
+        587,
+        539,
+        381,
+        390,
+        380,
+        324
+      ],
+      "statuses": [
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201
+      ]
+    },
+    "seed 100 casts + 500 images": {
+      "samples": 13,
+      "durationS": 12,
+      "peakVmRssMiB": 242.4,
+      "peakVmHwmMiB": 288.4,
+      "peakDockerStatsMiB": 190,
+      "peakSwapMiB": 0,
+      "steadyVmRssMiB": 220.9,
+      "steadyDockerStatsMiB": 170.7,
+      "oomKills": 0,
+      "seconds": 13,
+      "images": 500,
+      "bytesPerImage": 230738
+    },
+    "4-4 build fetch": {
+      "samples": 1,
+      "durationS": 0,
+      "peakVmRssMiB": 219.6,
+      "peakVmHwmMiB": 288.4,
+      "peakDockerStatsMiB": 171.2,
+      "peakSwapMiB": 0,
+      "steadyVmRssMiB": 219.6,
+      "steadyDockerStatsMiB": 171.2,
+      "oomKills": 0,
+      "seconds": 1.5,
+      "requests": 691,
+      "articles": 346,
+      "casts": 100,
+      "images": 200,
+      "imageBytes": 4614760
+    },
+    "4-5 site export": {
+      "samples": 5,
+      "durationS": 4,
+      "peakVmRssMiB": 229.5,
+      "peakVmHwmMiB": 288.4,
+      "peakDockerStatsMiB": 344.7,
+      "peakSwapMiB": 0,
+      "steadyVmRssMiB": 229.5,
+      "steadyDockerStatsMiB": 344.7,
+      "oomKills": 0,
+      "ok": true,
+      "err": "",
+      "seconds": 11.4,
+      "packageBytes": 170307072
+    }
+  },
+  "container": {
+    "oomKilled": false,
+    "restarting": false,
+    "running": true,
+    "exitCode": 0
+  },
+  "all": {
+    "samples": 2422,
+    "durationS": 2443,
+    "peakVmRssMiB": 288.8,
+    "peakVmHwmMiB": 288.8,
+    "peakDockerStatsMiB": 344.7,
+    "peakSwapMiB": 0,
+    "steadyVmRssMiB": 210.5,
+    "steadyDockerStatsMiB": 159.8,
+    "oomKills": 0
+  }
+}

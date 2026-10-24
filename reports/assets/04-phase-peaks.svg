@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-label="Short phases, VmHWM reset per phase (no swap): memory over time">
+<style>
+  svg { --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --grid:#e4e3df; --band:#f1f0ec; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --limit:#e34948; --crit:#52514e; }
+  @media (prefers-color-scheme: dark) {
+    svg { --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --grid:#33332f; --band:#242422; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --limit:#e66767; --crit:#c3c2b7; }
+  }
+  text { font: 12px system-ui, sans-serif; fill: var(--ink2); }
+  .title { font-size: 14px; font-weight: 600; fill: var(--ink); }
+  .line { fill: none; stroke-width: 2; stroke-linejoin: round; }
+  .s1 { stroke: var(--s1); } .s2 { stroke: var(--s2); } .s3 { stroke: var(--s3); }
+  .d1 { fill: var(--s1); } .d2 { fill: var(--s2); } .d3 { fill: var(--s3); }
+</style>
+<rect width="960" height="420" fill="var(--surface)"/>
+<text class="title" x="56" y="20">Short phases, VmHWM reset per phase (no swap)</text>
+
+
+<rect x="89.6" y="48" width="31.8" height="328" fill="var(--band)"/>
+
+<rect x="139.0" y="48" width="180.1" height="328" fill="var(--band)"/>
+
+<rect x="582.2" y="48" width="33.6" height="328" fill="var(--band)"/>
+
+<line x1="56" x2="810" y1="376" y2="376" stroke="var(--grid)" stroke-width="1"/><text x="48" y="380" text-anchor="end">0</text>
+<line x1="56" x2="810" y1="294" y2="294" stroke="var(--grid)" stroke-width="1"/><text x="48" y="298" text-anchor="end">100</text>
+<line x1="56" x2="810" y1="212" y2="212" stroke="var(--grid)" stroke-width="1"/><text x="48" y="216" text-anchor="end">200</text>
+<line x1="56" x2="810" y1="130" y2="130" stroke="var(--grid)" stroke-width="1"/><text x="48" y="134" text-anchor="end">300</text>
+<line x1="56" x2="810" y1="48" y2="48" stroke="var(--grid)" stroke-width="1"/><text x="48" y="52" text-anchor="end">400</text>
+<text x="48" y="38" text-anchor="end">MiB</text>
+<text x="56" y="394" text-anchor="middle">0.0m</text>
+<text x="206.8" y="394" text-anchor="middle">0.1m</text>
+<text x="357.6" y="394" text-anchor="middle">0.3m</text>
+<text x="508.4000000000001" y="394" text-anchor="middle">0.4m</text>
+<text x="659.2" y="394" text-anchor="middle">0.6m</text>
+<text x="810" y="394" text-anchor="middle">0.7m</text>
+<line x1="56" x2="810" y1="89" y2="89" stroke="var(--limit)" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="816" y="93">limit 350</text>
+<line x1="56" x2="810" y1="171" y2="171" stroke="var(--crit)" stroke-width="1" stroke-dasharray="2 4"/>
+<text x="816" y="175">criterion 250</text>
+<path class="line s1" d="M73.7,311.0L79.0,307.5L79.0,307.5L89.6,276.9L89.6,276.9L91.3,276.8L109.0,270.0L121.3,269.3L121.3,269.3L121.3,269.3L139.0,269.3L147.8,269.3L165.5,213.8L186.7,210.7L204.3,196.8L222.0,213.0L239.6,213.0L257.3,213.0L275.0,213.0L292.6,213.0L319.1,213.0L319.1,213.0L319.1,213.0L336.8,242.2L354.4,242.1L372.1,240.9L391.5,240.9L409.2,240.7L426.8,240.5L444.5,240.5L479.8,240.4L481.6,240.4L499.2,240.3L516.9,238.7L534.5,237.6L552.2,235.0L569.9,224.9L582.2,224.8L582.2,224.8L587.5,224.2L615.8,225.0L615.8,225.0L721.7,221.6L739.4,221.6L757.0,221.6L774.7,221.6L792.3,221.6L810.0,221.6"/>
+<path class="line s2" d="M73.7,351.1L79.0,349.8L79.0,349.8L89.6,324.6L89.6,324.6L91.3,324.4L109.0,317.5L121.3,317.0L121.3,317.0L121.3,317.0L139.0,317.0L147.8,317.0L165.5,261.0L186.7,257.5L204.3,243.2L222.0,259.2L239.6,259.2L257.3,259.3L275.0,259.3L292.6,259.3L319.1,259.3L319.1,259.3L319.1,259.3L336.8,287.9L354.4,287.6L372.1,286.2L391.5,285.7L409.2,285.2L426.8,284.9L444.5,283.9L479.8,283.5L481.6,283.5L499.2,283.0L516.9,281.0L534.5,279.1L552.2,276.1L569.9,265.9L582.2,265.9L582.2,265.9L587.5,264.8L615.8,265.9L615.8,265.9L721.7,129.4L739.4,129.4L757.0,129.4L774.7,129.4L792.3,129.4L810.0,129.4"/>
+<path class="line s3" d="M73.7,311.0L79.0,307.5L79.0,307.5L89.6,276.9L89.6,276.9L91.3,276.8L109.0,270.0L121.3,269.3L121.3,269.3L121.3,269.3L139.0,269.3L147.8,269.3L165.5,213.8L186.7,210.7L204.3,196.8L222.0,213.0L239.6,213.0L257.3,213.0L275.0,213.0L292.6,213.0L319.1,213.0L319.1,213.0L319.1,213.0L336.8,242.2L354.4,242.1L372.1,240.9L391.5,240.9L409.2,240.7L426.8,240.5L444.5,240.5L479.8,240.4L481.6,240.4L499.2,240.3L516.9,238.7L534.5,237.6L552.2,235.0L569.9,224.9L582.2,224.8L582.2,224.8L587.5,224.2L615.8,225.0L615.8,225.0L721.7,221.6L739.4,221.6L757.0,221.6L774.7,221.6L792.3,221.6L810.0,221.6"/>
+<text x="816" y="133.4" style="fill:var(--ink)">docker stats 301</text>
+<text x="816" y="225.6" style="fill:var(--ink)">node VmRSS 188</text>
+<text x="816" y="239.6" style="fill:var(--ink)">all processes 188</text>
+<rect x="56" y="406" width="14" height="4" rx="2" class="d1"/><text x="76" y="411">node VmRSS</text>
+<rect x="206" y="406" width="14" height="4" rx="2" class="d2"/><text x="226" y="411">docker stats</text>
+<rect x="356" y="406" width="14" height="4" rx="2" class="d3"/><text x="376" y="411">all processes</text>
+<text x="229.0" y="62" text-anchor="middle">4-3</text>
+<text x="450.7" y="62" text-anchor="middle">seed</text>
+<text x="712.9" y="62" text-anchor="middle">4-5</text>
+</svg>

@@ -1,0 +1,46 @@
+cms-1  | 18:22:40 [@astrojs/node] Server listening on 
+cms-1  |   local: http://localhost:4321 	
+cms-1  |   network: http://172.22.0.2:4321
+cms-1  | 
+cms-1  | Auto-seeded default collections
+cms-1  | EmDash: Loaded sandboxed plugin bench-hello:0.0.0 with capabilities: [content:read]
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGY8CA4FBA4EAG8R85E79' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGY8CA4FBA4EAG8R85E79
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYBC30A3BMEJ5HGCAY4Y' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYBC30A3BMEJ5HGCAY4Y
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYCQ2GWP6G4QVVK42A4E' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYCQ2GWP6G4QVVK42A4E
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYDYN54K7QM2KVA8Q77F' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYDYN54K7QM2KVA8Q77F
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYEXC9SS6W4W9SAMTVZD' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYEXC9SS6W4W9SAMTVZD
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYFQADNV1Z0XJEEG63HC' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYFQADNV1Z0XJEEG63HC
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYGH62X1HTQA4PWHXR0X' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYGH62X1HTQA4PWHXR0X
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYHAX3BBWQ7156YXREBD' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYHAX3BBWQ7156YXREBD
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYJ4T9FA0QP6XC38MN3C' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYJ4T9FA0QP6XC38MN3C
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYK0HTSGXAYM4DVY4GHX' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYK0HTSGXAYM4DVY4GHX
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYKRPH42JYWYST833XKZ' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYKRPH42JYWYST833XKZ
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYME4RGXKCB3YTDN7N44' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYME4RGXKCB3YTDN7N44
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYNA8GZKWXWGQQD29Y25' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYNA8GZKWXWGQQD29Y25
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYPCY5ER4E5C7K0H78D7' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYPCY5ER4E5C7K0H78D7
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYQ2EJSHDGAC2Y4HBFBM' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYQ2EJSHDGAC2Y4HBFBM
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYQSEZCQ8CQFAJGS9J51' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYQSEZCQ8CQFAJGS9J51
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYRFW96G24ZAVX58MF08' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYRFW96G24ZAVX58MF08
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYS5HFDSE1H222R1R5NE' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYS5HFDSE1H222R1R5NE
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYSYHWQ7CDJ100SBEH9Y' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYSYHWQ7CDJ100SBEH9Y
+cms-1  | [plugin:bench-hello] saved { id: '01M5QJGYTN8Y4NEDGH9DXDKT4D' }
+cms-1  | [build-trigger] (dry run) publish articles/01M5QJGYTN8Y4NEDGH9DXDKT4D

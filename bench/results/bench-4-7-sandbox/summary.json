@@ -1,0 +1,72 @@
+{
+  "project": "bench-4-7-sandbox",
+  "memLimit": "350m",
+  "memswap": "350m",
+  "variant": "sandbox",
+  "nodeOptions": "",
+  "phases": {
+    "4-1 boot+setup": {
+      "samples": 4,
+      "durationS": 3,
+      "peakVmRssMiB": 169.4,
+      "peakVmHwmMiB": 169.4,
+      "peakDockerStatsMiB": 130.5,
+      "peakSwapMiB": 0,
+      "peakAllProcsRssMiB": 260.1,
+      "steadyVmRssMiB": 154.5,
+      "steadyDockerStatsMiB": 111.6,
+      "steadyAllProcsRssMiB": 221.7,
+      "oomKills": 0
+    },
+    "4-1 idle": {
+      "samples": 119,
+      "durationS": 119,
+      "peakVmRssMiB": 166.3,
+      "peakVmHwmMiB": 169.3,
+      "peakDockerStatsMiB": 127.2,
+      "peakSwapMiB": 0,
+      "peakAllProcsRssMiB": 256.9,
+      "steadyVmRssMiB": 164.8,
+      "steadyDockerStatsMiB": 125.6,
+      "steadyAllProcsRssMiB": 255.4,
+      "oomKills": 0
+    },
+    "4-7 sandbox hooks": {
+      "samples": 60,
+      "durationS": 59,
+      "peakVmRssMiB": 173.9,
+      "peakVmHwmMiB": 180.6,
+      "peakDockerStatsMiB": 135.3,
+      "peakSwapMiB": 0,
+      "peakAllProcsRssMiB": 271,
+      "steadyVmRssMiB": 173.8,
+      "steadyDockerStatsMiB": 135,
+      "steadyAllProcsRssMiB": 270.9,
+      "oomKills": 0,
+      "processes": [
+        "12692 178068 node /opt/app/dist/server/entry.mjs",
+        "12813 48648 node /opt/app/node_modules/.pnpm/workerd@1.20261009.1/node_modules/workerd/bin/workerd serve /tmp/emdash-wor",
+        "12846 50824 /opt/app/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20261009.1/node_modules/@cloudflare/workerd-linux"
+      ]
+    }
+  },
+  "container": {
+    "oomKilled": false,
+    "restarting": false,
+    "running": true,
+    "exitCode": 0
+  },
+  "all": {
+    "samples": 184,
+    "durationS": 184,
+    "peakVmRssMiB": 173.9,
+    "peakVmHwmMiB": 180.6,
+    "peakDockerStatsMiB": 135.3,
+    "peakSwapMiB": 0,
+    "peakAllProcsRssMiB": 271,
+    "steadyVmRssMiB": 167,
+    "steadyDockerStatsMiB": 127.8,
+    "steadyAllProcsRssMiB": 258.8,
+    "oomKills": 0
+  }
+}

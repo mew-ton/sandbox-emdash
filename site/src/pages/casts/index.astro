@@ -1,0 +1,23 @@
+---
+import { allCasts } from "../../lib/all";
+import { localImage } from "../../lib/images";
+
+const casts = await Promise.all(
+	(await allCasts()).map(async (c) => ({ ...c, avatar: await localImage(c.avatarUrl, 256), banner: await localImage(c.bannerUrl, 1200) })),
+);
+---
+<html lang="ja">
+	<head><meta charset="utf-8" /><title>Casts</title></head>
+	<body>
+		<h1>Casts</h1>
+		{casts.map((c) => (
+			<section data-theme={c.themeColor ?? "none"}>
+				{c.banner && <img src={c.banner} alt={c.bannerAlt} />}
+				{c.avatar && <img src={c.avatar} alt={c.avatarAlt} width="128" />}
+				<h2>{c.name}</h2>
+				<p>{c.profile}</p>
+				<ul>{c.links.map((l) => <li><a href={l.url}>{l.label}</a></li>)}</ul>
+			</section>
+		))}
+	</body>
+</html>

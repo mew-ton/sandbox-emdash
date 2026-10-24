@@ -1,0 +1,22 @@
+{
+  "name": "cms-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stand-in for the PocketBase-backed cms-client (same contract)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown"
+  },
+  "devDependencies": {
+    "tsdown": "0.23.0",
+    "typescript": "5.9.3"
+  },
+  "packageManager": "pnpm@10.28.0"
+}

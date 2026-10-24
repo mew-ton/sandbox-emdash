@@ -1,0 +1,143 @@
+{
+  "collections": [
+    {
+      "slug": "articles",
+      "label": "Articles",
+      "labelSingular": "Article",
+      "supports": [
+        "drafts",
+        "revisions",
+        "scheduling",
+        "search"
+      ],
+      "hidden": false,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true,
+          "unique": false
+        },
+        {
+          "slug": "description",
+          "label": "Description",
+          "type": "text",
+          "required": false,
+          "unique": false
+        },
+        {
+          "slug": "keywords",
+          "label": "Keywords (comma separated)",
+          "type": "string",
+          "required": false,
+          "unique": false
+        },
+        {
+          "slug": "hero_image",
+          "label": "Hero image",
+          "type": "image",
+          "required": false,
+          "unique": false
+        },
+        {
+          "slug": "hero_image_label",
+          "label": "Hero image label",
+          "type": "string",
+          "required": false,
+          "unique": false
+        },
+        {
+          "slug": "body",
+          "label": "Body",
+          "type": "portableText",
+          "required": false,
+          "unique": false
+        },
+        {
+          "slug": "theme_color",
+          "label": "Theme color",
+          "type": "select",
+          "required": false,
+          "unique": false,
+          "validation": {
+            "options": [
+              "red",
+              "orange",
+              "yellow",
+              "green",
+              "blue",
+              "purple"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "casts",
+      "label": "Casts",
+      "labelSingular": "Cast",
+      "supports": [
+        "drafts",
+        "revisions",
+        "search"
+      ],
+      "hidden": false,
+      "fields": [
+        {
+          "slug": "name",
+          "label": "Name",
+          "type": "string",
+          "required": true,
+          "unique": false
+        },
+        {
+          "slug": "profile",
+          "label": "Profile",
+          "type": "text",
+          "required": false,
+          "unique": false
+        },
+        {
+          "slug": "avatar",
+          "label": "Avatar",
+          "type": "image",
+          "required": false,
+          "unique": false
+        },
+        {
+          "slug": "banner",
+          "label": "Banner",
+          "type": "image",
+          "required": false,
+          "unique": false
+        },
+        {
+          "slug": "links",
+          "label": "Links (JSON)",
+          "type": "json",
+          "required": false,
+          "unique": false
+        },
+        {
+          "slug": "theme_color",
+          "label": "Theme color",
+          "type": "select",
+          "required": false,
+          "unique": false,
+          "validation": {
+            "options": [
+              "red",
+              "orange",
+              "yellow",
+              "green",
+              "blue",
+              "purple"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "version": "ea4f6c845177afc5"
+}

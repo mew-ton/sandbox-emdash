@@ -1,0 +1,70 @@
+{
+  "project": "bench-4-7-base",
+  "memLimit": "350m",
+  "memswap": "350m",
+  "variant": "standard",
+  "nodeOptions": "",
+  "phases": {
+    "4-1 boot+setup": {
+      "samples": 2,
+      "durationS": 1,
+      "peakVmRssMiB": 132.8,
+      "peakVmHwmMiB": 132.8,
+      "peakDockerStatsMiB": 74.6,
+      "peakSwapMiB": 0,
+      "peakAllProcsRssMiB": 132.8,
+      "steadyVmRssMiB": 126.7,
+      "steadyDockerStatsMiB": 68.4,
+      "steadyAllProcsRssMiB": 126.7,
+      "oomKills": 0
+    },
+    "4-1 idle": {
+      "samples": 117,
+      "durationS": 118,
+      "peakVmRssMiB": 130.3,
+      "peakVmHwmMiB": 132.7,
+      "peakDockerStatsMiB": 72.1,
+      "peakSwapMiB": 0,
+      "peakAllProcsRssMiB": 130.3,
+      "steadyVmRssMiB": 129.7,
+      "steadyDockerStatsMiB": 71.5,
+      "steadyAllProcsRssMiB": 129.7,
+      "oomKills": 0
+    },
+    "4-7 sandbox hooks": {
+      "samples": 62,
+      "durationS": 61,
+      "peakVmRssMiB": 132.1,
+      "peakVmHwmMiB": 132.7,
+      "peakDockerStatsMiB": 74.8,
+      "peakSwapMiB": 0,
+      "peakAllProcsRssMiB": 132.1,
+      "steadyVmRssMiB": 131.9,
+      "steadyDockerStatsMiB": 74.4,
+      "steadyAllProcsRssMiB": 131.9,
+      "oomKills": 0,
+      "processes": [
+        "12035 135224 node /opt/app/dist/server/entry.mjs"
+      ]
+    }
+  },
+  "container": {
+    "oomKilled": false,
+    "restarting": false,
+    "running": true,
+    "exitCode": 0
+  },
+  "all": {
+    "samples": 182,
+    "durationS": 184,
+    "peakVmRssMiB": 132.8,
+    "peakVmHwmMiB": 132.8,
+    "peakDockerStatsMiB": 74.8,
+    "peakSwapMiB": 0,
+    "peakAllProcsRssMiB": 132.8,
+    "steadyVmRssMiB": 130.1,
+    "steadyDockerStatsMiB": 72.2,
+    "steadyAllProcsRssMiB": 130.1,
+    "oomKills": 0
+  }
+}

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+!.env.example
+data.db
+data.db-*
+uploads/
+*.tgz
+
+**/.emdash/migrations.json
+# item 3a builds a copy of site/src (verify/item3-cms-client.mjs copies it in)
+experiments/3a-live-collection/site-3a/src/pages/
+experiments/3a-live-collection/site-3a/src/lib/
+bench/.build/

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://emdashcms.com/seed.schema.json",
+  "version": "1",
+  "meta": {
+    "name": "sandbox-cms",
+    "description": "EmDash headless sandbox (articles / casts)"
+  },
+  "settings": {
+    "title": "Sandbox CMS"
+  },
+  "collections": [
+    {
+      "slug": "articles",
+      "label": "Articles",
+      "labelSingular": "Article",
+      "supports": ["drafts", "revisions", "scheduling", "search"],
+      "fields": [
+        { "slug": "title", "label": "Title", "type": "string", "required": true, "searchable": true },
+        { "slug": "description", "label": "Description", "type": "text" },
+        { "slug": "keywords", "label": "Keywords (comma separated)", "type": "string" },
+        { "slug": "hero_image", "label": "Hero image", "type": "image" },
+        { "slug": "hero_image_label", "label": "Hero image label", "type": "string" },
+        { "slug": "body", "label": "Body", "type": "portableText", "searchable": true },
+        {
+          "slug": "theme_color",
+          "label": "Theme color",
+          "type": "select",
+          "validation": { "options": ["red", "orange", "yellow", "green", "blue", "purple"] }
+        }
+      ]
+    },
+    {
+      "slug": "casts",
+      "label": "Casts",
+      "labelSingular": "Cast",
+      "supports": ["drafts", "revisions", "search"],
+      "fields": [
+        { "slug": "name", "label": "Name", "type": "string", "required": true, "searchable": true },
+        { "slug": "profile", "label": "Profile", "type": "text" },
+        { "slug": "avatar", "label": "Avatar", "type": "image" },
+        { "slug": "banner", "label": "Banner", "type": "image" },
+        { "slug": "links", "label": "Links (JSON)", "type": "json" },
+        {
+          "slug": "theme_color",
+          "label": "Theme color",
+          "type": "select",
+          "validation": { "options": ["red", "orange", "yellow", "green", "blue", "purple"] }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "sandbox-verify",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Scripts that run the item 1-3 checks against a locally started cms/ build",
+  "packageManager": "pnpm@10.28.0"
+}

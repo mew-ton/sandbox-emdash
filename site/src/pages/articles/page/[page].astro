@@ -1,0 +1,25 @@
+---
+import { fetchArticles } from "cms-client";
+import { PER_PAGE } from "../../../lib/all";
+
+export async function getStaticPaths() {
+	const { totalPages } = await fetchArticles({ page: 1, perPage: PER_PAGE });
+	return Array.from({ length: Math.max(1, totalPages) }, (_, i) => ({ params: { page: String(i + 1) } }));
+}
+
+const page = Number(Astro.params.page);
+const list = await fetchArticles({ page, perPage: PER_PAGE, sort: "-publishedAt" });
+---
+<html lang="ja">
+	<head><meta charset="utf-8" /><title>Articles — page {page}</title></head>
+	<body>
+		<h1>Articles (page {list.page} / {list.totalPages}, {list.totalItems} total)</h1>
+		<ol>
+			{list.items.map((a) => <li><a href={`/articles/${a.id}/`}>{a.title}</a> <time datetime={a.publishedAt}>{a.publishedAt.slice(0, 10)}</time></li>)}
+		</ol>
+		<nav>
+			{page > 1 && <a href={`/articles/page/${page - 1}/`}>prev</a>}
+			{page < list.totalPages && <a href={`/articles/page/${page + 1}/`}>next</a>}
+		</nav>
+	</body>
+</html>
