@@ -3,7 +3,8 @@
 コミュニティ CMS の稼働基盤（現行: PocketBase）を EmDash へ置き換えられるかを、コードを書きながら判定するためのリポジトリ。
 検証はすべてローカル（Node と、メモリ計測用のローカル Docker）で行う。本番環境へのデプロイはしない。
 
-結果は [`reports/00-summary.md`](reports/00-summary.md) から読む。
+調査の要件（各番号の検証内容と合格基準）は [`docs/requirements.md`](docs/requirements.md)。
+結果は [`reports/00-summary.md`](reports/00-summary.md) から読む。レポートの番号はすべて要件文書の番号を指す。
 
 ## 構成
 
@@ -13,6 +14,7 @@ providers/    Discord 認証プロバイダとサーバー側ガード（provide
 cms-client/   境界パッケージ（REST ラッパー）。site/ へは pnpm pack の tarball でだけ渡す
 site/         公開サイト相当（静的出力の Astro）。cms-client 以外に CMS への依存を持たない
 bench/        メモリ計測（docker compose・サンプラー・負荷シナリオ・グラフ）
+docs/         調査の要件（requirements.md）
 reports/      調査結果
 verify/       項目 1〜3 の自動検証スクリプト（ローカルで cms/ を起動して確かめる）
 experiments/  項目 3a（getEmDashCollection ラッパー）の実験

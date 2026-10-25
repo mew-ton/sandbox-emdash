@@ -27,14 +27,20 @@
 
 ## 結果
 
-| # | 結果 | 要点 |
-|---|---|---|
-| 3-1 | 列挙済み | 上表。3a は追加依存 5 つ、統合とアダプタ、DB ファイルとメディアの場所（env 2 つ） |
-| 3-2 | 表にした | 下表 |
-| 3-3 | 合格 | `fetchArticles` / `fetchArticle` / `fetchCasts` / `fetchCast`。公開記事 12 件と一覧 3 ページを生成、下書きは出ない |
-| 3-4 | 合格 | `dist/index.d.ts` に `emdash` / `_emdash` / `/api/` / Portable Text / `Bearer` / `storageKey` 等が現れない。site/ の `node_modules` に `emdash` なし。site/src の import は `cms-client` と `astro:assets` だけ |
-| 3-5 | 合格 | 下記の変換を公開 API 経由で確認。レスポンス型は生成物のみ |
-| 3-6 | 合格（代役で確認） | PocketBase 版の代役と `.d.ts` が完全一致。同じ site/ のソースで両方ビルドし、全 17 ページの HTML が一致（画像ファイル名のハッシュを除く） |
+要件の原文は [`docs/requirements.md`](../docs/requirements.md) の「項目 3」と「§0-4 Domain 型の契約」。
+
+| # | 検証内容（要件） | 合格基準（要件） | 結果 | 何が起きたか |
+|---|---|---|---|---|
+| 3-1 | 3a（`getEmDashCollection()` ラッパー）を実装し、`site/` を最小構成でビルドする | `site/` が追加で必要とするもの（依存パッケージ、Astro の設定、DB の接続情報、env vars）をすべて列挙できる | 列挙済み | 上の比較表。追加依存 5 つ、EmDash 統合とサーバーアダプタ、CMS の SQLite ファイルと uploads ディレクトリの場所（env 2 つ） |
+| 3-2 | 3a で DB を CMS と共有する方法を確認する | 方式ごとに、CI に渡る secret・データ、追加コスト、CMS 停止時のビルド可否を表にできる | 表にした | 下の表。どの方式も DB 全体（ユーザー情報を含む）か外部 DB サービスが CI 側に要る |
+| 3-3 | 3b（REST ラッパー）を実装する | §0-4 のシグネチャと Domain 型のまま、`site/` が tarball の `cms-client` だけを依存に持ってビルドできる | 合格 | `fetchArticles` / `fetchArticle` / `fetchCasts` / `fetchCast`。site/ の依存は `astro` と `cms-client` だけで、公開記事 12 件と一覧 3 ページを生成、下書きは出ない |
+| 3-4 | 公開 surface の純度を検査する | `.d.ts` に `emdash` の型・REST のパス・EmDash 固有の用語が現れない。`site/` の `node_modules` に `emdash` が入らない | 合格 | `.d.ts` に EmDash の型・パス・用語なし。site/ の node_modules に `emdash` なし |
+| 3-5 | Raw → Domain 変換の網羅 | rich text・メディア参照・select・カンマ区切り・日時が型安全に変換できる。レスポンス型は OpenAPI か `emdash types` から生成し、手書きしない | 合格 | 下の「Raw → Domain 変換」。型は OpenAPI と `emdash types` の生成物だけを使った |
+| 3-6 | 移行耐性の確認 | 現行（PocketBase 版）の `cms-client` と 3b 版で、`site/` 側のコードが 1 行も変わらない | 合格（代役で確認） | 本番の PocketBase 版はこのリポジトリに無いので、同じ契約を PocketBase の REST 形で実装した代役と比べた。`.d.ts` は完全一致、site/ を変えずに両方でビルドでき、出力 HTML も一致。本番パッケージとの突き合わせは残っている |
+
+**判定（要件）**: 3b が合格 → 構成案 A が成立する（項目 3 について）。
+
+検証スクリプトの機械出力（generated/）では、ひとつの # を複数の確認に分けて `3-1b`、`3-1c` のように枝番で示している。枝番はすべて同じ番号の要件に属する。
 
 ### 3-2 3a で DB を CMS と共有する方法
 
@@ -79,7 +85,3 @@ EmDash から取得したのと同じ内容を PocketBase 形のモックで配�
 これは「同じ契約の実装を差し替えても site/ が変わらない」ことの確認で、本番の PocketBase 版パッケージそのものとの比較ではない。
 本番パッケージの `.d.ts` と `cms-client/dist/index.d.ts` を突き合わせる作業は残っている。
 §0-4 に定義が無い `ColorThemeBase`（6 色の文字列ユニオン）、`FetchOptions`、`Cast` の形はこのサンドボックスで仮に決めたもので、突き合わせの対象に含まれる。
-
-## 判定
-
-3b が合格したので、項目 3 は構成案 A（headless + `cms-client` 維持）を支持する。
