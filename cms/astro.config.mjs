@@ -38,6 +38,8 @@ export default defineConfig({
 			updateCheck: false,
 			// Admin UI uses system fonts: no Google Fonts fetch at build time or in the browser.
 			fonts: false,
+			// No MCP endpoint: agents and the CLI use API tokens issued in the admin.
+			mcp: false,
 		}),
 	],
 	devToolbar: { enabled: false },

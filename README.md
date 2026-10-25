@@ -13,10 +13,10 @@ cms/          EmDash 1.3.1 アプリ（Astro + Node adapter + SQLite + ローカ
 providers/    Discord 認証プロバイダとサーバー側ガード（providers/discord）、モック Discord
 cms-client/   境界パッケージ（REST ラッパー）。site/ へは pnpm pack の tarball でだけ渡す
 site/         公開サイト相当（静的出力の Astro）。cms-client 以外に CMS への依存を持たない
-bench/        メモリ計測（docker compose・サンプラー・負荷シナリオ・グラフ）
+bench/        メモリ計測（docker compose・サンプラー・負荷シナリオ・グラフ）。security/ に破壊的 DoS PoC
 docs/         調査の要件（requirements.md）
 reports/      調査結果
-verify/       項目 1〜3 の自動検証スクリプト（ローカルで cms/ を起動して確かめる）
+verify/       項目 1〜3・5 の自動検証スクリプト（ローカルで cms/ を起動して確かめる）
 experiments/  項目 3a（getEmDashCollection ラッパー）の実験
 ```
 

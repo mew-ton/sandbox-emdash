@@ -1,4 +1,6 @@
 import { discordGuard } from "@sandbox/emdash-auth-discord/guard";
-import { defineMiddleware } from "astro:middleware";
+import { defineMiddleware, sequence } from "astro:middleware";
 
-export const onRequest = defineMiddleware(discordGuard);
+import { publicSurface } from "./security/public-surface";
+
+export const onRequest = sequence(defineMiddleware(publicSurface), defineMiddleware(discordGuard));
