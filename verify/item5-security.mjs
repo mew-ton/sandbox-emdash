@@ -142,7 +142,9 @@ try {
 	let limited2 = 0, last2 = 0;
 	for (let i = 0; i < 14; i++) { last2 = (await anon2.post("/_emdash/api/auth/passkey/options", {}, { headers: { "x-forwarded-for": "203.0.113.7" } })).status; if (last2 === 429) limited2++; }
 	R.check("5-5b", "with EMDASH_TRUSTED_PROXY_HEADERS set, the limiter fires per forwarded IP (429)", limited2 > 0, `${limited2}/14 returned 429 (last=${last2}) when x-forwarded-for is trusted. Production behind nginx/Caddy MUST set this, or 5-5a's inert limiter applies.`);
-	cms.base = cms2.base; cms.dir = cms2.dir; cms.stop = cms2.stop;
+	cms.base = cms2.base; cms.dir = cms2.dir; cms.stop = cms2.stop; cms.output = cms2.output;
+	// A member session on the restarted instance, for the refused-write audit line (5-7).
+	const { client: member2 } = await discordLogin(cms2.base, mock, USERS.member);
 
 	// -------------------------------------------------------------------------
 	// 5-6 dependency audit (the crash PoC is bench/security/dos-poc.mjs)
@@ -162,21 +164,24 @@ try {
 	R.note("5-6c", "override in place", `cms/package.json pnpm.overrides = ${JSON.stringify(pkg.pnpm?.overrides ?? {})}`);
 
 	// -------------------------------------------------------------------------
-	// 5-7 audit trail
+	// 5-7 audit trail (request-level log to stdout, cms/src/security/audit-log.ts)
 	// -------------------------------------------------------------------------
 	admin.base = cms.base; // the instance was restarted for 5-5b (same data dir, new port)
 	const leaderRow = (await admin.get("/_emdash/api/admin/users")).json.data.items.find((u) => u.email === USERS.member.email);
 	const pub = await createEntry(admin, "articles", { title: "audit", body: [block("a", "x")] });
 	await admin.del(`/_emdash/api/content/articles/${pub.id}`);
 	if (leaderRow) await admin.put(`/_emdash/api/admin/users/${leaderRow.id}`, { role: 30 });
+	const blockedDelete = member2 ? await member2.del(`/_emdash/api/content/articles/${pub.id}`) : null; // member, refused
 	await sleep(300);
-	const { DatabaseSync } = await import("node:sqlite");
-	const db = new DatabaseSync(`${cms.dir}/data.db`, { readOnly: true });
-	const count = db.prepare("select count(*) c from audit_logs").get().c;
-	const actions = db.prepare("select distinct action from audit_logs").all().map((r) => r.action);
-	db.close();
-	R.check("5-7a", "content publish/delete and role changes are recorded in an audit trail", count > 0 && actions.some((a) => /content|publish|delete|user|role/i.test(a)), `audit_logs rows=${count}, actions=[${actions.join(", ")}]`);
-	R.note("5-7b", "what core records", "core EmDash writes audit_logs only for MCP tool calls and site export/import. Ordinary publish/delete/role changes need the non-official @emdash-cms/plugin-audit-log (v0.2.3). The table and columns (actor_id, actor_ip, action, resource_*, status) exist, so the plugin or a native hook can fill it.");
+	const auditLines = cms.output.join("").split("\n").filter((l) => l.includes('"tag":"audit"')).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+	const done = auditLines.filter((l) => l.phase === "done");
+	const started = auditLines.filter((l) => l.phase === "start");
+	const delLine = done.find((l) => l.method === "DELETE" && /content\/articles/.test(l.path) && l.status === 200);
+	const roleLine = done.find((l) => l.method === "PUT" && /admin\/users/.test(l.path));
+	const blockedLine = done.find((l) => l.method === "DELETE" && l.status === 403);
+	const attributed = (l) => l && typeof l.actor === "string" && l.actor !== "anonymous" && !!l.ip && l.role != null;
+	R.check("5-7a", "every write is attributed in the audit log (actor id, role, IP, path, outcome)", attributed(delLine) && attributed(roleLine) && (blockedLine ? attributed(blockedLine) : true) && started.length > 0, `delete→${delLine?.actor}/${delLine?.status} role-change→${roleLine?.actor}/${roleLine?.status} member-blocked-delete→${blockedLine?.actor}/${blockedLine?.status}; ${done.length} write lines, ${started.length} pre-handler 'start' lines`);
+	R.note("5-7b", "placement and scope", "logged in middleware (cms/src/security/audit-log.ts), not EmDash hooks — the after-publish/delete hooks omit the actor. Covers content/media/schema/settings/admin/auth/setup writes, including refused (403) attempts. Core's own audit_logs table stays for MCP/transfer only. Ship these JSON lines off the box so an insider cannot edit them. For the crash case (5-6) the app log is best-effort — a SIGKILL can drop buffered stdout — so the forensic record of a crashing request is the reverse proxy's access log, which must be enabled.");
 } catch (e) {
 	console.error(e);
 	R.check("error", "script error", false, e.stack?.split("\n").slice(0, 3).join(" "));
