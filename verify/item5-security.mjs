@@ -126,25 +126,19 @@ try {
 	// -------------------------------------------------------------------------
 	// 5-5 brute-force limits
 	// -------------------------------------------------------------------------
-	// passkey/options is 10 requests per 60 s per client IP.
+	// passkey/options is 10 requests per 60 s per client IP. trustedProxyHeaders
+	// is baked into astro.config.mjs (no env var needed), so the forwarded IP
+	// is trusted by default.
 	const burst = async (headers) => {
 		let limited = 0, last = 0;
 		for (let i = 0; i < 14; i++) { last = (await anon.post("/_emdash/api/auth/passkey/options", {}, { headers })).status; if (last === 429) limited++; }
 		return { limited, last };
 	};
-	const defaultRun = await burst({});
-	R.note("5-5a", "the per-IP login limiter is INERT in the default Node config", `${defaultRun.limited}/14 login attempts were limited. getClientIp returns null without Cloudflare or a trusted proxy header, and checkRateLimit treats a null subject as always-allowed — so brute-force protection never fires by default on a plain VPS.`);
-
-	// With a trusted proxy header configured, the same burst is limited per IP.
-	await cms.stop();
-	const cms2 = await startCms({ dir: cms.dir, env: { EMDASH_ALLOW_INVITES: "on", EMDASH_TRUSTED_PROXY_HEADERS: "x-forwarded-for", EMAIL_OUTBOX_DIR: `${ROOT}/bench/.build/outbox-item5` } });
-	const anon2 = new Client(cms2.base);
-	let limited2 = 0, last2 = 0;
-	for (let i = 0; i < 14; i++) { last2 = (await anon2.post("/_emdash/api/auth/passkey/options", {}, { headers: { "x-forwarded-for": "203.0.113.7" } })).status; if (last2 === 429) limited2++; }
-	R.check("5-5b", "with EMDASH_TRUSTED_PROXY_HEADERS set, the limiter fires per forwarded IP (429)", limited2 > 0, `${limited2}/14 returned 429 (last=${last2}) when x-forwarded-for is trusted. Production behind nginx/Caddy MUST set this, or 5-5a's inert limiter applies.`);
-	cms.base = cms2.base; cms.dir = cms2.dir; cms.stop = cms2.stop; cms.output = cms2.output;
-	// A member session on the restarted instance, for the refused-write audit line (5-7).
-	const { client: member2 } = await discordLogin(cms2.base, mock, USERS.member);
+	const forwarded = await burst({ "x-forwarded-for": "203.0.113.7" });
+	R.check("5-5a", "the login rate limiter fires per forwarded IP with NO env var (baked trustedProxyHeaders)", forwarded.limited > 0, `${forwarded.limited}/14 returned 429 (last=${forwarded.last}) for x-forwarded-for=203.0.113.7. The hardened default ships in the build, not a deploy-time env var.`);
+	const direct = await burst({});
+	R.note("5-5b", "a request with no forwarded header is still unlimited", `${direct.limited}/14 limited when no x-forwarded-for is sent — i.e. a client reaching the Node port directly, bypassing the proxy. Mitigation: bind the app to 127.0.0.1 / firewall the port so the reverse proxy is the only ingress (then x-forwarded-for is always present and cannot be spoofed).`);
+	const member2 = member; // same instance; member session from 5-3 is reused for 5-7
 
 	// -------------------------------------------------------------------------
 	// 5-6 dependency audit (the crash PoC is bench/security/dos-poc.mjs)
@@ -166,7 +160,6 @@ try {
 	// -------------------------------------------------------------------------
 	// 5-7 audit trail (request-level log to stdout, cms/src/security/audit-log.ts)
 	// -------------------------------------------------------------------------
-	admin.base = cms.base; // the instance was restarted for 5-5b (same data dir, new port)
 	const leaderRow = (await admin.get("/_emdash/api/admin/users")).json.data.items.find((u) => u.email === USERS.member.email);
 	const pub = await createEntry(admin, "articles", { title: "audit", body: [block("a", "x")] });
 	await admin.del(`/_emdash/api/content/articles/${pub.id}`);

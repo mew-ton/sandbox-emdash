@@ -12,7 +12,7 @@
 - **5-7（追跡）: 対策して合格。** core は操作の監査ログを持たないので、自前 middleware で全書き込みを実行者・ロール・IP・結果付きに記録するようにした。
 
 その他: 未認証で届く入口の封鎖（5-1、middleware と `mcp: false`）、本文 XSS（5-2）、アップロード XSS（5-3）、CSRF・Cookie・ヘッダ（5-4）は合格。
-総当たり対策（5-5）は「仕組みはあるが既定では無効」で、`EMDASH_TRUSTED_PROXY_HEADERS` の設定が必須。
+総当たり対策（5-5）は、`trustedProxyHeaders` をビルドに焼き込んで既定で効くようにした（Node ポートはプロキシ経由のみ到達可にする前提）。
 
 ## 結果
 
@@ -22,7 +22,7 @@
 | 5-2 | 公開サイトに出す本文の XSS | `<script>`・イベント属性・`javascript:` が無害化 | 合格（スキーマ依存） | 本文に入れた `<script>` / `<img onerror>` / `javascript:` リンクは、公開 HTML ではすべてエスケープされ、実行可能なタグとして出ない（`@portabletext/to-html`）。html/iframe ブロック型を足すと変わる（下記） |
 | 5-3 | アップロードファイルの XSS | 危険な形式を拒否、または実行されない形で配信 | 合格 | SVG・HTML は拒否（400）。中身が SVG のファイルは `image/svg+xml` + `Content-Disposition: attachment` でダウンロード扱い。全メディアに `X-Content-Type-Options: nosniff` と制限的 CSP（`sandbox; default-src 'none'`）。配信 Content-Type はバイトを見て決める |
 | 5-4 | 管理画面と API の HTTP 防御 | 別 origin から状態変更が拒否される。Cookie が HttpOnly/Secure/SameSite。CSP が付く | 合格（HSTS はプロキシ） | Cookie 認証の書き込みは `X-EmDash-Request` ヘッダ必須（単純なクロスサイトフォームは送れない）。セッション Cookie は HttpOnly/Secure/SameSite=Lax。CSP・nosniff・`frame-ancestors 'none'`・`no-store` あり。HSTS は無し（TLS 終端のプロキシで付ける前提） |
-| 5-5 | ログインと magic link の総当たり対策（プロキシ配下想定） | 一定回数で制限。プロキシ配下でも IP 単位で効く設定がある | **条件付き（要設定）** | 仕組みはある（passkey options 10回/60秒 等）が、**既定では無効**。クライアント IP が解決できないと（Cloudflare 無し・trusted header 無しの Node 既定）、制限は常に素通りする。`EMDASH_TRUSTED_PROXY_HEADERS=x-forwarded-for` を設定すると転送元 IP 単位で効いた。本番で必須 |
+| 5-5 | ログインと magic link の総当たり対策（プロキシ配下想定） | 一定回数で制限。プロキシ配下でも IP 単位で効く設定がある | 合格（対策込み） | 仕組みはある（passkey options 10回/60秒 等）が、EmDash 既定では IP が解決できず素通りした。`trustedProxyHeaders: ["x-forwarded-for"]` を **astro.config に焼き込んだ**ので、env 変数なしで転送元 IP 単位で効く。ただし Node ポートはプロキシ経由のみ到達可能にする必要がある（127.0.0.1 バインド/ファイアウォール。直叩きだと x-forwarded-for を詐称できる） |
 | 5-6 | 依存パッケージの脆弱性 | `pnpm audit` で high 以上の未対処が無い。更新を追う手順がある | **不合格（可用性のみ・方針で受容）** | 下記。EmDash が zod 4.5.4（CVE-2023-54404、high）を固定。override で audit は clean にできるが、**一般メンバーが 1 リクエストで CMS を落とせる経路は zod を上げても残る**。ただし偶発では踏めず、手で細工した書き込みが要る（下記）。50人の信頼コミュニティでは「性善説 + `restart: always` + 監査ログ」で受容、乗っ取りはセッション短縮で緩和する方針 |
 | 5-7 | 監査ログ | 誰がいつ公開・削除・権限変更したかを後から追える | 合格（対策込み） | core は `audit_logs` を MCP とエクスポート/インポートにしか書かない。そこで自前の middleware（`cms/src/security/audit-log.ts`）を足し、全書き込みを実行者・ロール・IP・パス・結果付きで stdout に構造化ログ出力した。拒否された操作（403）も記録される |
 
@@ -104,10 +104,24 @@ core の `audit_logs` テーブルは存在し列も揃う（`actor_id` / `actor
 
 ロール変更は、運営操作（`PUT /_emdash/api/admin/users/{id}`）も Discord 同期（ログイン callback）も middleware が実行者付きで捕捉する。
 
+## 設定の持ち方（ビルド焼き込み / env / 秘密）
+
+セキュリティの「設定」は、デプロイ時の env に依存すると付け忘れで保護が外れる（5-5・5-1 がその例だった）。そこで**非秘密のセキュリティ設定はビルド済み JS に焼き込み**、秘密は逆に**ビルドにも env にも置かない**方針にした。
+
+| 種類 | 置き場所 | 例 |
+|---|---|---|
+| セキュリティ設定（非秘密） | **ビルド焼き込み**（astro.config / src/security / provider config） | 塞ぐルート一覧、`mcp:false`、`trustedProxyHeaders`、セッション有効期限 1h 既定、CSP、監査ログ |
+| デプロイ固有の識別子（非秘密） | env | `EMDASH_SITE_URL`、`DISCORD_GUILD_ID`、ロール ID、`DISCORD_CLIENT_ID` |
+| 秘密 | 実行時にファイル / Docker・systemd secret から読む（env にも載せない） | `EMDASH_ENCRYPTION_KEY`、`DISCORD_CLIENT_SECRET`、Bot Token、各種トークン |
+
+- **焼き込むのは保護の既定値だけ**。これで「env を付け忘れた VPS がうっかり無防備で立ち上がる」事故を防ぐ。env での上書きは残してあるが、未設定でも堅い側に倒れる
+- **秘密は焼き込まない**。ビルド成果物＝秘密になり、リポジトリ/アーティファクトに残り、ローテーションに再ビルドが要るので逆に危険（要件 §0-5・1-3 にも反する）。env に置くのも、`docker inspect` / `/proc/<pid>/environ` / クラッシュダンプに出るため、本番では root 所有のファイルや Docker/systemd secret を起動時に読む形が望ましい
+
 ## この項目で入れた対策（サンドボックス）
 
 - `cms/src/security/public-surface.ts` + `src/middleware.ts`: 匿名の不要ルートを 404（5-1）
-- `cms/astro.config.mjs`: `mcp: false`（5-1）
+- `cms/astro.config.mjs`: `mcp: false`（5-1）、`trustedProxyHeaders: ["x-forwarded-for"]`（5-5 を env なしで有効化）
 - `cms/src/security/audit-log.ts`: 全書き込みの監査ログ（5-7）
-- `cms/.env.example`: `DISCORD_SESSION_MAX_AGE_SECONDS=3600`（乗っ取り窓の短縮、5-6）、`EMDASH_TRUSTED_PROXY_HEADERS`（5-5）
+- `providers/discord/src/config.ts`: セッション有効期限の既定を 12h→1h に焼き込み（乗っ取り窓の短縮、5-6）
 - `cms/package.json`: `pnpm.overrides.zod = 4.6.7`（5-6 の audit を clean に。ただしメンバー crash は残る）
+- `cms/.env.example`: 秘密・識別子・焼き込み済み既定を分類し、秘密はファイル/secret で渡すことを明記

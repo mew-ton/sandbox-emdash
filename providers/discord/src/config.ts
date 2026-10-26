@@ -58,8 +58,13 @@ export function readDiscordConfig(): DiscordConfig | null {
 		leaderRoleIds: list("DISCORD_LEADER_ROLE_IDS"),
 		memberRoleIds: list("DISCORD_MEMBER_ROLE_IDS"),
 		botToken: env("DISCORD_BOT_TOKEN"),
+		// Secure defaults are baked in (reports/05-security.md 5-6): a short
+		// session limits a hijacked cookie's window, and 10-minute re-checks
+		// apply Discord demotions/leaves to live sessions. Env can lengthen
+		// them for a specific deployment, but shipping without the env var
+		// keeps the hardened posture rather than a lax one.
 		revalidateSeconds: seconds("DISCORD_REVALIDATE_SECONDS", 600),
-		sessionMaxAgeSeconds: seconds("DISCORD_SESSION_MAX_AGE_SECONDS", 12 * 60 * 60),
+		sessionMaxAgeSeconds: seconds("DISCORD_SESSION_MAX_AGE_SECONDS", 60 * 60),
 		apiBase: (env("DISCORD_API_BASE") ?? "https://discord.com/api/v10").replace(/\/$/, ""),
 		authorizeUrl: env("DISCORD_AUTHORIZE_URL") ?? "https://discord.com/oauth2/authorize",
 		pkce: env("DISCORD_PKCE")?.toLowerCase() !== "off",

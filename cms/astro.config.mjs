@@ -40,6 +40,13 @@ export default defineConfig({
 			fonts: false,
 			// No MCP endpoint: agents and the CLI use API tokens issued in the admin.
 			mcp: false,
+			// Security posture baked into the build, not left to deploy-time env
+			// (so a VPS can't silently ship without it). reports/05-security.md.
+			// Trust the reverse proxy's forwarded IP so the login rate limits
+			// work by default (5-5). REQUIRES the Node port to be reachable only
+			// through the proxy — bind to 127.0.0.1 / firewall it — or a client
+			// could spoof this header to pollute rate-limit buckets.
+			trustedProxyHeaders: ["x-forwarded-for"],
 		}),
 	],
 	devToolbar: { enabled: false },

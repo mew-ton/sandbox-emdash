@@ -77,7 +77,8 @@ Discord は実物を使わずモックで検証した（実物で手元確認す
 | D10 | 5-6 | zod の脆弱性（high）への当座の対応 | **採用: `pnpm.overrides.zod = 4.6.7`**（audit は clean になる。ただしクリーンインストールでしか効かず、メンバー crash は残る）。EmDash 本体の更新も追う |
 | D11 | 5-6 | メンバーが 1 リクエストで CMS を落とせる経路（zod 更新でも残る） | **方針決定済み**: 偶発では踏めず可用性のみなので、内部犯は性善説で受容し監査ログ（D12）で追う／乗っ取りはセッション短縮（`DISCORD_SESSION_MAX_AGE_SECONDS=3600`）で窓を狭める／`restart: always` を併用。根本遮断は EmDash 本体へ報告し上流修正を待つ。※緩和はいずれも 1 回の停止は防げない |
 | D12 | 5-7 | 操作の監査ログ | **採用: 自前 middleware**（`cms/src/security/audit-log.ts`）で全書き込みを実行者・ロール・IP・結果付きに stdout 記録。この JSON を journald/収集で箱の外へ退避し、内部犯が消せない形にする。リバースプロキシのアクセスログも有効化（クラッシュ試行の記録用） |
-| D13 | 5-5 | 総当たり対策が既定で無効なこと | **採用: `EMDASH_TRUSTED_PROXY_HEADERS`**（例: `x-forwarded-for`）を本番で設定して IP 単位で効かせる。設定しないとログイン・magic link のレート制限が素通りする |
+| D13 | 5-5 | 総当たり対策が既定で無効なこと | **採用: `trustedProxyHeaders` を astro.config に焼き込み**、env なしで効かせる。Node ポートはプロキシ経由のみ到達可能にする（127.0.0.1 バインド/ファイアウォール）。他プロキシ用に env で上書き可 |
+| D14 | 全般 | セキュリティ設定・秘密の持ち方 | **採用: 非秘密の保護設定はビルドに焼き込む**（付け忘れで保護が外れない）。**秘密はビルドにも env にも置かず**、実行時に root 所有ファイル / Docker・systemd secret から読む。デプロイ固有の識別子だけ env |
 
 ## 構成案 A で必要になる作業
 
@@ -109,8 +110,9 @@ Discord は実物を使わずモックで検証した（実物で手元確認す
 
 ### セキュリティ（項目 5）
 
-- 未認証で届く不要ルートを塞ぐ middleware（`cms/src/security/public-surface.ts`）と `mcp: false` を本番にも入れる（5-1）
-- `EMDASH_TRUSTED_PROXY_HEADERS` を設定してレート制限を効かせる（5-5 / D13）。TLS 終端のプロキシで HSTS を付ける（5-4）
+- 保護設定はビルドに焼き込み済み（5-1 の塞ぐルートと `mcp:false`、5-5 の `trustedProxyHeaders`、5-6 のセッション 1h 既定、5-7 の監査ログ）。デプロイ時の env 付け忘れで外れない（D14）
+- 秘密（鍵・client secret・トークン）はビルドにも env にも置かず、root 所有ファイル / Docker・systemd secret を起動時に読む（D14）
+- Node ポートはプロキシ経由のみ到達可能にする（127.0.0.1 バインド / ファイアウォール）。TLS 終端のプロキシで HSTS を付け、アクセスログを有効化（5-4 / 5-5 / 5-7）
 - `pnpm.overrides.zod` を入れるときはクリーンインストールで反映を確認し、`pnpm audit` だけを信じない（5-6 / D10）
 - 5-6 のメンバー crash を EmDash 本体へ報告（D11）。当座は `restart: always`、`DISCORD_SESSION_MAX_AGE_SECONDS=3600`（乗っ取り窓の短縮）、監査ログで受容
 - 監査ログ（`cms/src/security/audit-log.ts`、5-7 / D12）を journald/収集で箱の外へ退避し、リバースプロキシのアクセスログも有効化。バックアップ・エクスポートパッケージ（ユーザーの email を含む）の保管先を決める（5-8）
