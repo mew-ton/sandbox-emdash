@@ -11,6 +11,7 @@ import { sqlite } from "emdash/db";
 // build runs from `cms/` locally and from `/app` in the benchmark container.
 export default defineConfig({
 	output: "server",
+	server: { host: true, allowedHosts: ["mewton.local"] },
 	adapter: node({ mode: "standalone" }),
 	integrations: [
 		react(),
