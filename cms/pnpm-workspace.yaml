@@ -1,0 +1,15 @@
+# pnpm 10 settings. `pnpm.overrides` in package.json is no longer read — pnpm
+# 10.28 ignores the whole `pnpm` field and says so on every run — so the
+# override lives here. Until this move it survived only because it was already
+# recorded in pnpm-lock.yaml, which meant regenerating the lockfile would have
+# silently dropped it.
+#
+# zod: EmDash 1.3.1 pins 4.5.4, which carries CVE-2023-54404 (high). 4.6.7 is
+# the fixed release. This does not close the member-reachable crash (5-6) — that
+# one survives the upgrade and waits on an EmDash fix. See reports/05-security.md
+# and reports/00-summary.md, D10.
+#
+# Verify with a clean install, not with `pnpm audit` alone: audit reads the tree
+# it is given.
+overrides:
+  zod: 4.6.7

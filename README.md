@@ -67,3 +67,14 @@ bench/prepare.sh && node bench/run.mjs --project bench-noswap --memswap 350m
 
 `.env` はコミットしない（`.env.example` のみ）。検証スクリプト内の鍵やトークンはローカル検証専用の固定値で、
 どの実サービスにも対応しない。URL は `localhost` / `example.com` のみ。
+
+
+
+
+&nbsp;
+
+最初
+
+
+
+ssh -L 4321:localhost:4321 mewton.local をしてから立てる
