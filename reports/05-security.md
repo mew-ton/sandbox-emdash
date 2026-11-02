@@ -104,6 +104,46 @@ core の `audit_logs` テーブルは存在し列も揃う（`actor_id` / `actor
 
 ロール変更は、運営操作（`PUT /_emdash/api/admin/users/{id}`）も Discord 同期（ログイン callback）も middleware が実行者付きで捕捉する。
 
+## override が読まれていなかった（5-6、2026-11-03 追記）
+
+起動のたびに pnpm が警告していた:
+
+```
+[WARN] The "pnpm" field in package.json is no longer read by pnpm.
+The following keys were ignored: "pnpm.overrides".
+```
+
+pnpm 10.28 は `package.json` の `pnpm` フィールドを読まない。zod の override が効いていたのは、**過去に生成された `pnpm-lock.yaml` に `overrides: zod: 4.6.7` が記録されていたから**で、宣言そのものは無視されていた。
+
+つまり:
+
+| | 状態 |
+|---|---|
+| `package.json` の `pnpm.overrides` | 無視されていた |
+| `pnpm-lock.yaml` の `overrides:` | これだけが効いていた |
+| 値を書き換えた場合 | **何も起きない** |
+| ロックファイルを再生成した場合 | **override が消え、zod が 4.5.4（CVE-2023-54404、high）に戻る** |
+
+`pnpm audit` はロックファイルの木を読むので clean のままで、宣言が機能していないことを示さない。**付け忘れで保護が外れないようにする**という D14 の方針と逆向きの状態だった。
+
+`cms/pnpm-workspace.yaml` へ移設し、`pnpm audit` が clean、解決される zod が `4.6.7` の 1 本だけであることを確認した。
+
+なお上流は zod を**完全固定**している（`emdash` と `@emdash-cms/auth` がともに `"zod": "4.5.4"`。`^` も `~` も無い）。override は宣言された依存を破っており、**互換性は上流が保証しない**。脆弱性を取る判断（D10）は妥当だが、機能面は `verify/item1・2・5` の再実行で確かめる必要がある。
+
+## リッチテキストから生 HTML と iframe が入る（5-1 / 5-2、2026-11-03 追記）
+
+5-1 は**未認証**で届くルートを対象にしていたため、認証済みユーザーの権限範囲は範囲外だった。そこに穴があった。
+
+EmDash のリッチテキストエディタは `HtmlBlockExtension` と `IframeBlockExtension` を登録しており、**Editor が生 HTML と iframe を公開コンテンツに入れられる**。本構成では Discord メンバー全員が Editor（§0-3 の「一般メンバー」を Editor に対応させているため）なので、**メンバー全員が任意の HTML を公開できる**状態だった。
+
+エディタの拡張構成はハードコードで、フィールドの `options` も `validation` も届かない。配置する手段がない。
+
+**対策**: `cms/src/plugins/portable-text-policy/` を追加し、`content:beforeSave` で許可されない `_type`・`style`・マーク・リストを含む保存を拒否する。`articles.body` では `htmlBlock` と `iframe`（および `code` / `table` / `gallery` / `video`、h1・h5・h6、`blockquote`）を不許可にした。
+
+実装で判明した点: **ツールバーのラベルと保存される `_type` が一致しない**（コードブロックは `code`、生 HTML は `htmlBlock`）。ラベルから推測した許可リストでは両方が素通りしていた。全キーを列挙したカタログを持ち、カタログに無いキーも拒否する形にして、取りこぼしと将来の追加の双方を止めている。
+
+5-2（公開サイトでの無害化）との関係は未確認。`site/` が Portable Text をどう描くかによって、CMS 側で止めるだけで十分かが変わる。**再確認が必要**。
+
 ## 設定の持ち方（ビルド焼き込み / env / 秘密）
 
 セキュリティの「設定」は、デプロイ時の env に依存すると付け忘れで保護が外れる（5-5・5-1 がその例だった）。そこで**非秘密のセキュリティ設定はビルド済み JS に焼き込み**、秘密は逆に**ビルドにも env にも置かない**方針にした。
@@ -123,5 +163,5 @@ core の `audit_logs` テーブルは存在し列も揃う（`actor_id` / `actor
 - `cms/astro.config.mjs`: `mcp: false`（5-1）、`trustedProxyHeaders: ["x-forwarded-for"]`（5-5 を env なしで有効化）
 - `cms/src/middlewares/audit-log/index.ts`: 全書き込みの監査ログ（5-7）
 - `providers/discord/src/config.ts`: セッション有効期限の既定を 12h→1h に焼き込み（乗っ取り窓の短縮、5-6）
-- `cms/package.json`: `pnpm.overrides.zod = 4.6.7`（5-6 の audit を clean に。ただしメンバー crash は残る）
+- `cms/pnpm-workspace.yaml`: `overrides.zod = 4.6.7`（5-6 の audit を clean に。ただしメンバー crash は残る）。**2026-11-03 に `cms/package.json` の `pnpm.overrides` から移設した** — 下の「override が読まれていなかった」
 - `cms/.env.example`: 秘密・識別子・焼き込み済み既定を分類し、秘密はファイル/secret で渡すことを明記

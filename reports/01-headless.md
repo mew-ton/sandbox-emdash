@@ -3,6 +3,8 @@
 対象: emdash 1.3.1 / `cms/`（公開ページを削除し、admin と REST API だけを提供）。
 検証: `verify/item1-headless.mjs`（ローカルの `cms/dist`。機械出力は [`generated/01-headless.md`](generated/01-headless.md)）。
 
+下の表の結果は 2026-10-25 時点のコードに対するもので、別の環境（Claude Code のクラウド）で取得した。2026-11-03 に `cms/src/middlewares/`（1-1 の対象）と `seed/seed.json`（1-6 の対象）を変更しており、**スクリプトの再実行は 1-7 でブロックされて完走しない**（下の「リレーションがインポートを阻む」）。鮮度は [`00-summary.md`](00-summary.md#検証の鮮度) にまとめている。
+
 ## 結論
 
 ビルド時の読み取り（1-2〜1-5）とスキーマのコード管理（1-6）は成立した。
@@ -32,6 +34,45 @@
 
 **不合格時の扱い（要件）**: 1-2 / 1-6 / 1-7 のいずれかが不合格なら headless 運用は不可とし、構成案 B の検討に移る。
 → 1-7 が該当する。ただし 1-7 の原因はエクスポート機能の仕様で、構成案 B（統合）にしても同じエクスポートを使う限り結果は変わらない。扱いは [`00-summary.md`](00-summary.md) の D1。
+
+## リレーションがインポートを阻む（1-7、2026-11-03 追記）
+
+1-7 の不合格は「ユーザーが戻らない」だったが、**インポートがそもそも開始できないケース**が加わった。
+
+`seed/seed.json` に `relations`（`metadata` → `articles` の `metadata_join_guide`）を足したところ、`emdash site import` が `TRANSFER_TARGET_NOT_EMPTY`（"This site already has content; import needs an empty site"）で拒否される。
+
+原因は `emdash/src/transfer/domain.ts` の `MUST_BE_EMPTY`:
+
+```
+content_taxonomies, _emdash_relations, _emdash_content_references,
+_emdash_bylines, _emdash_byline_fields, _emdash_byline_field_values,
+_emdash_byline_field_group_values, _emdash_content_bylines,
+media, media_folders, revisions, _emdash_seo,
+_emdash_comments, _emdash_comment_reactions
+```
+
+**コレクションには seed 由来の免除がある**（`isSeededSource()` が `source === "seed"` を blocker にしない）のに、**`_emdash_relations` は無条件に空を要求する**。セットアップで seed を適用すればリレーションの行ができるので、インポート先が常に「空でない」と判定される。
+
+`reference` 型のフィールドはリレーション経由でしか定義できない（`FieldValidation.relation` + `relationSide`）。したがって:
+
+> **`reference` フィールドを seed でスキーマ管理する構成では、`emdash site import` が構造的に使えない。**
+
+コレクションは免除してリレーションは免除しない、という非対称は EmDash 側の不整合に見える。1-7 の合格基準（空のインスタンスへ戻せること）に対して、D1 の選択肢 (a)（完全復元は SQLite のバックアップと `uploads/` で行い、`site export` はコンテンツ移送用と位置づける）をより強く支持する材料になる。
+
+副作用として、`verify/item1-headless.mjs` が 1-7 の途中で異常終了し、**1-8 以降が実行されない**。スクリプトを「リレーションがある構成ではインポートが拒否される」ことを記録して続行する形に直す必要がある。
+
+## seed の実機適用（1-6、2026-11-03 追記）
+
+スクリプトは未完走だが、1-6 の内容自体は実機で確認できた。`data.db` を削除してセットアップから seed を適用し、以下が再現された。
+
+| 要素 | 結果 |
+|---|---|
+| `metadata` コレクション（`routable: false`、`supports: ["revisions"]`） | 作成され `ec_metadata` テーブルができた |
+| `repeater` フィールド（`links`、サブフィールド `label` / `url`） | 定義が入った |
+| `reference` フィールド（`join_guide`） | 定義が入り、`_emdash_relations` に `metadata_join_guide` ができた |
+| `image` フィールド 2 つ + `options`（寸法） | 定義が入り、`options` はプラグインから `schema:read` で読めた |
+
+`emdash seed` は既存サイトにも適用できる（`onConflict` が `skip` / `update` / `error`）。ドキュメントは "It is not a migration that runs on every deployment" と注意し、`update` はコピーで試してから使うよう勧めている。当初「seed はセットアップ時のみ」と記録していたが、これは誤りだった。
 
 検証スクリプトの機械出力（generated/）では、ひとつの # を複数の確認に分けて `1-2a`、`1-2b` のように枝番で示している。枝番はすべて同じ番号の要件に属する。
 
