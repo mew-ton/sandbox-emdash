@@ -5,7 +5,7 @@
 
 調査対象: emdash 1.3.1（2026-10-18 公開）、Astro 7.4.2、Node 24.22.1。すべてローカル（Node / ローカル Docker）で検証した。
 
-要件番号に紐づかない EmDash 自体の能力・限界は [`findings.md`](findings.md)、調査中に決めたことは [`docs/decisions.md`](../docs/decisions.md)。各要件の検証がどこまで実機で確かめられているかは下の「[検証の鮮度](#検証の鮮度)」を見る。
+要件番号に紐づかない EmDash 自体の能力・限界は [`findings.md`](findings.md)、調査中に決めたことは [`docs/decisions.md`](../docs/decisions.md)。各要件の検証がどこまで実機で確かめられているかは下の「[検証の鮮度](#検証の鮮度)」、調査を完了させるために残っている作業は [`open-items.md`](open-items.md)。
 
 ## 結論
 
