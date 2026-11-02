@@ -1,15 +1,15 @@
 # 項目 6: コンテンツの制約（寸法・保存形式・本文）
 
-実行: 2026-11-02T17:49:43.407Z / 生成: `verify/item6-content-constraints.mjs`
+実行: 2026-11-02T18:01:55.085Z / 生成: `verify/item6-content-constraints.mjs`
 
 制約は `cms/seed/seed.json` の宣言から読み、スクリプト側に値を持たない。
 casts.avatar = 3840x2160、articles.body = {"allowedTypes":["block","image"],"allowedStyles":["normal","h2","h3","h4"],"allowedMarks":["strong","em","link"],"allowedLists":["bullet","number"]}
 
 | # | check | result | detail |
 |---|---|---|---|
-| 6-3a | a PNG upload is refused | PASS | status 500 |
-| 6-3b | the refusal names where to convert the file | FAIL | {"success":false,"error":{"code":"UPLOAD_ERROR","message":"Upload failed"}} |
-| 6-3c | a PNG uploaded from the casts.avatar field is refused by EmDash itself | PASS | status 400 {"success":false,"error":{"code":"INVALID_TYPE","message":"File type not allowed"}} |
+| 6-3a | a PNG upload is refused on the media page (no fieldId, so EmDash's global allowlist would allow it) | PASS | status 400 |
+| 6-3b | the refusal names the file, says WebP only, and points at the converter page | PASS | status 400 {"success":false,"error":{"code":"INVALID_TYPE","message":"\"shot.png\" is image/png. Only WebP is stored on this server, because disk space is the limit — convert the file first on Tools → Convert images, then upload th |
+| 6-3c | a PNG uploaded from the casts.avatar field is refused by EmDash itself | PASS | status 400 {"success":false,"error":{"code":"INVALID_TYPE","message":"\"shot.png\" is image/png. Only WebP is stored on this server, because disk space is the limit — conv |
 | 6-4a | a WebP upload is accepted | PASS | status 201 |
 | 6-2a | the stored image keeps its 3840x2160 pixels and stays WebP | PASS | 3840x2160 image/webp |
 | 6-1a | an image of the wrong size can still be stored as media (the gate is on the field, not the library) | PASS | status 201 |

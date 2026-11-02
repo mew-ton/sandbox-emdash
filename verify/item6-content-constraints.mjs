@@ -82,16 +82,16 @@ try {
 	const pngRefused = pngUpload.status >= 400;
 	R.check(
 		"6-3a",
-		"a PNG upload is refused",
+		"a PNG upload is refused on the media page (no fieldId, so EmDash's global allowlist would allow it)",
 		pngRefused,
 		`status ${pngUpload.status}${pngRefused ? "" : " — a PNG was stored"}`,
 	);
 	const pngMessage = JSON.stringify(pngUpload.json ?? pngUpload.text ?? "");
 	R.check(
 		"6-3b",
-		"the refusal names where to convert the file",
-		pngRefused && /convert/i.test(pngMessage),
-		pngRefused ? pngMessage.slice(0, 200) : "not refused",
+		"the refusal names the file, says WebP only, and points at the converter page",
+		pngUpload.status === 400 && /shot\.png/.test(pngMessage) && /webp/i.test(pngMessage) && /Convert images/i.test(pngMessage),
+		`status ${pngUpload.status} ${pngMessage.slice(0, 220)}`,
 	);
 
 	// The same PNG through casts.avatar, where the seed's allowedMimeTypes applies.

@@ -26,7 +26,7 @@
 
 import { definePlugin } from "emdash";
 
-const ALLOWED = "image/webp";
+import { refusal } from "./rule.ts";
 
 export function createPlugin() {
 	return definePlugin({
@@ -53,16 +53,17 @@ export function createPlugin() {
 		},
 		hooks: {
 			/**
-			 * The message names the way through. An editor who cannot convert a file
-			 * themselves is otherwise simply stopped, which is why this plugin ships
-			 * the converter page alongside the refusal.
+			 * The backstop. Every upload path runs this, including uploads a plugin
+			 * makes through its own context, which no middleware sees.
+			 *
+			 * EmDash reports the throw as `500 UPLOAD_ERROR "Upload failed"` and
+			 * drops the message, so the two HTTP routes are refused earlier by
+			 * middlewares/webp-upload-message/ to say the same thing legibly. Both
+			 * read the rule from ./rule.ts.
 			 */
 			"media:beforeUpload": async (event) => {
-				const { type, name } = event.file;
-				if (type === ALLOWED) return;
-				throw new Error(
-					`"${name}" is ${type || "of an unknown type"}. Only WebP is stored, to keep the server's disk use down — convert it first on Tools → Convert images, which does it in your browser.`,
-				);
+				const why = refusal(event.file.name, event.file.type);
+				if (why) throw new Error(why);
 			},
 		},
 	});
