@@ -87,10 +87,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * something hand-written, and neither should pass unexamined.
  */
 function reject(policy: Policy, axis: Axis, key: string): string | null {
-	if (!isKnown(axis, key)) return `${describe(axis, key)} is not something this CMS recognises`;
+	if (!isKnown(axis, key)) return `contains ${describe(axis, key)}, which this CMS does not recognise`;
 	const allowed = policy[axis];
 	if (!allowed || allowed.has(key)) return null;
-	return `${describe(axis, key)} is not allowed here`;
+	return `cannot contain ${describe(axis, key)}`;
 }
 
 /**
@@ -178,7 +178,7 @@ export function createPlugin() {
 
 					const found = violation(event.content[field.slug], policy);
 					if (found) {
-						throw new ContentSaveRejectedError(`"${field.label}" contains ${found}.`);
+						throw new ContentSaveRejectedError(`"${field.label}" ${found}.`);
 					}
 				}
 			},
