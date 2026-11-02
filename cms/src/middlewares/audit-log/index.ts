@@ -25,7 +25,8 @@
  * This middleware's job is attribution for ordinary writes.
  */
 
-import type { APIContext, MiddlewareNext } from "astro";
+import type { APIContext } from "astro";
+import { defineMiddleware } from "astro:middleware";
 
 /** Paths whose writes (and auth calls) are worth an audit line. */
 const AUDITED_PREFIXES = [
@@ -70,7 +71,7 @@ function emit(record: Record<string, unknown>): void {
 	}
 }
 
-export async function auditLog(context: APIContext, next: MiddlewareNext): Promise<Response> {
+export const auditLog = defineMiddleware(async (context, next) => {
 	const { method } = context.request;
 	const path = context.url.pathname;
 	const audited = AUDITED_PREFIXES.some((p) => path.startsWith(p));
@@ -105,4 +106,4 @@ export async function auditLog(context: APIContext, next: MiddlewareNext): Promi
 		auth: viaToken ? "token" : user ? "session" : "none",
 	});
 	return response;
-}
+});

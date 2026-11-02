@@ -3,7 +3,9 @@
  * members. Use as (part of) the project's `src/middleware.ts`; Astro runs it
  * after EmDash's own middleware, so `locals.user` is already resolved.
  *
- * 1. Setup gate        `/_emdash/api/setup/*` needs EMDASH_SETUP_TOKEN until setup is done.
+ * 1. Setup gate        `/_emdash/api/setup/*` needs EMDASH_SETUP_TOKEN until setup is done,
+ *                      and Discord sign-in stays shut until an operator exists — a member
+ *                      signing in first would leave the instance with no Admin.
  * 2. Login paths       passkey/magic-link/invite/signup/built-in OAuth/token issuance are
  *                      closed to non-operators. Magic link opens only in cold-standby mode.
  * 3. Live sessions     Discord sessions expire after DISCORD_SESSION_MAX_AGE_SECONDS and are
@@ -48,6 +50,9 @@ const OPERATOR_ONLY = [
 	"/_emdash/oauth/authorize",
 ];
 
+/** The provider's own sign-in routes, declared public so Discord can reach them. */
+const DISCORD_LOGIN = "/_emdash/api/auth/discord/";
+
 const MAGIC_LINK = "/_emdash/api/auth/magic-link/";
 const INVITE_ACCEPT = [
 	"/_emdash/api/auth/invite/accept",
@@ -86,10 +91,16 @@ function captureSetupToken(context: APIContext) {
 	});
 }
 
-async function setupGate(context: APIContext, next: MiddlewareNext) {
+/** Whether the operator account has been created and setup marked finished. */
+async function isSetupComplete(context: APIContext): Promise<boolean> {
 	const db = context.locals.emdash?.db;
-	const done = db ? await new OptionsRepository(db).get("emdash:setup_complete") : undefined;
-	if (done === true || done === "true") return next();
+	if (!db) return false;
+	const done = await new OptionsRepository(db).get("emdash:setup_complete");
+	return done === true || done === "true";
+}
+
+async function setupGate(context: APIContext, next: MiddlewareNext) {
+	if (await isSetupComplete(context)) return next();
 	const expected = process.env.EMDASH_SETUP_TOKEN?.trim();
 	const presented =
 		context.url.searchParams.get("setup_token") ?? context.cookies.get(SETUP_COOKIE)?.value;
@@ -152,6 +163,23 @@ export async function discordGuard(context: APIContext, next: MiddlewareNext): P
 	captureSetupToken(context);
 
 	if (path.startsWith("/_emdash/api/setup/")) return setupGate(context, next);
+
+	// Discord sign-in stays shut until an operator exists.
+	//
+	// The provider declares these routes public, and the setup gate above only
+	// covers `/_emdash/api/setup/`, so on an empty database a member could sign
+	// in first. That creates an Editor — and `POST /_emdash/api/setup/admin`
+	// refuses with ADMIN_EXISTS once any user exists, so the instance would be
+	// left with no Admin and no way to appoint one: `users:manage` is Admin-only.
+	// Recovering means editing the database by hand.
+	if (path.startsWith(DISCORD_LOGIN) && !(await isSetupComplete(context))) {
+		return deny(
+			context,
+			403,
+			"SETUP_INCOMPLETE",
+			"Create the operator account before signing in with Discord",
+		);
+	}
 
 	if (startsWithAny(path, ALWAYS_CLOSED)) {
 		return deny(context, 403, "LOGIN_PATH_CLOSED", "This sign-in method is disabled");

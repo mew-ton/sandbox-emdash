@@ -7,6 +7,10 @@ import { defineConfig } from "astro/config";
 import emdash, { local } from "emdash/astro";
 import { sqlite } from "emdash/db";
 
+import { imageDimensions } from "./src/plugins/image-dimensions/descriptor.ts";
+import { portableTextPolicy } from "./src/plugins/portable-text-policy/descriptor.ts";
+import { webpOnly } from "./src/plugins/webp-only/descriptor.ts";
+
 // Paths are resolved at runtime relative to the working directory, so the same
 // build runs from `cms/` locally and from `/app` in the benchmark container.
 export default defineConfig({
@@ -35,6 +39,19 @@ export default defineConfig({
 					capabilities: ["hooks.email-transport:register"],
 					entrypoint: fileURLToPath(new URL("./src/plugins/email-outbox.ts", import.meta.url)),
 				},
+				// Exact pixel sizes for image fields, which EmDash cannot express
+				// declaratively. reports/01-headless.md.
+				imageDimensions(),
+				// Only WebP reaches the disk, because storage is the binding constraint
+				// on this server, plus the page that converts for editors in their
+				// browser. Apart from image-dimensions: that one is a decision about
+				// photography, this one about capacity. reports/04-memory.md.
+				webpOnly(),
+				// Rich text limited to what each field declares in seed/seed.json.
+				// EmDash's editor toolbar is hardcoded — it offers code blocks, raw
+				// HTML, iframes and tables to every Editor — so this refuses on save
+				// rather than hiding controls. reports/01-headless.md.
+				portableTextPolicy(),
 			],
 			updateCheck: false,
 			// Admin UI uses system fonts: no Google Fonts fetch at build time or in the browser.

@@ -1,16 +1,19 @@
 /**
- * Close routes EmDash serves to anonymous visitors that a headless CMS does
- * not need (public site features, MCP / CLI OAuth discovery, image service).
+ * Close the routes EmDash serves to anonymous visitors that a headless CMS does
+ * not need.
  *
- * Only anonymous requests are refused: the admin UI itself uses some of these
- * routes (image service, search, device-flow approval) with a session.
- * The full classification of anonymous routes is in reports/05-security.md and
- * is re-checked by verify/item5-security.mjs.
+ * Refused with 404 so they are indistinguishable from routes that were never
+ * injected. Only anonymous requests are refused: the admin UI itself uses some
+ * of these — the image service, search, device-flow approval — with a session.
+ *
+ * The full classification is in reports/05-security.md and is re-checked by
+ * verify/item5-security.mjs.
  */
 
-import type { APIContext, MiddlewareNext } from "astro";
+import type { APIContext } from "astro";
+import { defineMiddleware } from "astro:middleware";
 
-/** Path prefixes refused to anonymous callers with 404. */
+/** Path prefixes refused to anonymous callers. */
 export const CLOSED_TO_ANONYMOUS = [
 	// MCP / CLI OAuth (operators use API tokens issued in the admin instead)
 	"/.well-known/oauth-authorization-server",
@@ -19,8 +22,8 @@ export const CLOSED_TO_ANONYMOUS = [
 	"/_emdash/api/oauth/",
 	"/_emdash/oauth/",
 	// Public-site features (the public site is built elsewhere)
-	"/_emdash/api/search",
 	"/_emdash/api/comments/",
+	"/_emdash/api/search",
 	"/_emdash/api/visual-editing/",
 	"/_emdash/api/snapshot",
 	"/_emdash/api/site/domain-proof",
@@ -38,10 +41,13 @@ async function isAnonymous(context: APIContext): Promise<boolean> {
 	return !sessionUser;
 }
 
-export async function publicSurface(context: APIContext, next: MiddlewareNext): Promise<Response> {
+export const publicSurface = defineMiddleware(async (context, next) => {
 	const path = context.url.pathname;
-	if (CLOSED_TO_ANONYMOUS.some((p) => path === p || path.startsWith(p)) && (await isAnonymous(context))) {
+	const closed = CLOSED_TO_ANONYMOUS.some((p) => path === p || path.startsWith(p));
+
+	if (closed && (await isAnonymous(context))) {
 		return new Response("Not found", { status: 404 });
 	}
+
 	return next();
-}
+});

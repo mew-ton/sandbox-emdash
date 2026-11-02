@@ -3,11 +3,22 @@
   "version": "1",
   "meta": {
     "name": "sandbox-cms",
-    "description": "EmDash headless sandbox (articles / casts)"
+    "description": "EmDash headless sandbox (articles / casts / metadata)"
   },
   "settings": {
     "title": "Sandbox CMS"
   },
+  "relations": [
+    {
+      "slug": "metadata_join_guide",
+      "parentCollection": "metadata",
+      "childCollection": "articles",
+      "parentLabel": "Metadata",
+      "childLabel": "Join guide",
+      "childLabelSingular": "Join guide",
+      "maxChildrenPerParent": 1
+    }
+  ],
   "collections": [
     {
       "slug": "articles",
@@ -20,7 +31,18 @@
         { "slug": "keywords", "label": "Keywords (comma separated)", "type": "string" },
         { "slug": "hero_image", "label": "Hero image", "type": "image" },
         { "slug": "hero_image_label", "label": "Hero image label", "type": "string" },
-        { "slug": "body", "label": "Body", "type": "portableText", "searchable": true },
+        {
+          "slug": "body",
+          "label": "Body",
+          "type": "portableText",
+          "searchable": true,
+          "options": {
+            "allowedTypes": ["block", "image"],
+            "allowedStyles": ["normal", "h2", "h3", "h4"],
+            "allowedMarks": ["strong", "em", "link"],
+            "allowedLists": ["bullet", "number"]
+          }
+        },
         {
           "slug": "theme_color",
           "label": "Theme color",
@@ -37,8 +59,20 @@
       "fields": [
         { "slug": "name", "label": "Name", "type": "string", "required": true, "searchable": true },
         { "slug": "profile", "label": "Profile", "type": "text" },
-        { "slug": "avatar", "label": "Avatar", "type": "image" },
-        { "slug": "banner", "label": "Banner", "type": "image" },
+        {
+          "slug": "avatar",
+          "label": "Avatar",
+          "type": "image",
+          "options": { "width": 3840, "height": 2160 },
+          "validation": { "allowedMimeTypes": ["image/webp"] }
+        },
+        {
+          "slug": "banner",
+          "label": "Banner",
+          "type": "image",
+          "options": { "width": 3840, "height": 2160 },
+          "validation": { "allowedMimeTypes": ["image/webp"] }
+        },
         { "slug": "links", "label": "Links (JSON)", "type": "json" },
         {
           "slug": "theme_color",
@@ -46,6 +80,40 @@
           "type": "select",
           "validation": { "options": ["red", "orange", "yellow", "green", "blue", "purple"] }
         }
+      ]
+    },
+    {
+      "slug": "metadata",
+      "label": "Metadata",
+      "labelSingular": "Metadata",
+      "description": "Site-wide values only site/ reads. One entry. Values EmDash itself reads (title, tagline, logo, favicon) stay in Settings.",
+      "routable": false,
+      "hidden": false,
+      "supports": ["revisions"],
+      "fields": [
+        {
+          "slug": "links",
+          "label": "External links",
+          "type": "repeater",
+          "validation": {
+            "subFields": [
+              { "slug": "label", "label": "Label", "type": "string", "required": true },
+              { "slug": "url", "label": "URL", "type": "url", "required": true }
+            ]
+          }
+        },
+        {
+          "slug": "join_guide",
+          "label": "Join guide entry",
+          "type": "reference",
+          "validation": {
+            "relation": "metadata_join_guide",
+            "relationSide": "parent",
+            "multiple": false
+          }
+        },
+        { "slug": "articles_hero", "label": "Articles index hero", "type": "image" },
+        { "slug": "casts_hero", "label": "Casts index hero", "type": "image" }
       ]
     }
   ]
