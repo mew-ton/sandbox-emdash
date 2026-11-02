@@ -15,7 +15,12 @@ rm -rf "$build/providers/discord/node_modules"
 
 if [ "$variant" = "standard" ]; then
 	(cd "$root/cms" && pnpm build >/dev/null)
-	cp -r "$root/cms/dist" "$root/cms/package.json" "$root/cms/pnpm-lock.yaml" "$build/app/"
+	# pnpm-workspace.yaml carries the zod override. pnpm 10 no longer reads
+	# `pnpm.overrides` from package.json, so leaving this file behind would
+	# install the pinned 4.5.4 (CVE-2023-54404) instead of 4.6.7 — the image
+	# would differ from what was verified. See reports/05-security.md 5-6.
+	cp -r "$root/cms/dist" "$root/cms/package.json" "$root/cms/pnpm-lock.yaml" \
+		"$root/cms/pnpm-workspace.yaml" "$build/app/"
 	(cd "$build/app" && pnpm install --prod --frozen-lockfile --ignore-scripts >/dev/null)
 else
 	src="$here/.build/$variant-src"
