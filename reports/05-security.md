@@ -18,13 +18,13 @@
 
 | # | 検証内容（要件） | 合格基準（要件） | 結果 | 何が起きたか |
 |---|---|---|---|---|
-| 5-1 | 未認証で到達できるルートを洗い出す | 一覧があり「必要／塞いだ」に分類。塞いだものは 404/403 | 合格（対策込み） | 既定では公開サイト用・MCP/CLI 用 OAuth・画像サービスなど 12 系統が未認証で届いた。`cms/src/security/public-surface.ts`（middleware）で匿名時に 404 にし、`mcp: false` で MCP も止めた。塞いだ後は 404、運営・health 経路は維持 |
+| 5-1 | 未認証で到達できるルートを洗い出す | 一覧があり「必要／塞いだ」に分類。塞いだものは 404/403 | 合格（対策込み） | 既定では公開サイト用・MCP/CLI 用 OAuth・画像サービスなど 12 系統が未認証で届いた。`cms/src/middlewares/public-surface/index.ts`（middleware）で匿名時に 404 にし、`mcp: false` で MCP も止めた。塞いだ後は 404、運営・health 経路は維持 |
 | 5-2 | 公開サイトに出す本文の XSS | `<script>`・イベント属性・`javascript:` が無害化 | 合格（スキーマ依存） | 本文に入れた `<script>` / `<img onerror>` / `javascript:` リンクは、公開 HTML ではすべてエスケープされ、実行可能なタグとして出ない（`@portabletext/to-html`）。html/iframe ブロック型を足すと変わる（下記） |
 | 5-3 | アップロードファイルの XSS | 危険な形式を拒否、または実行されない形で配信 | 合格 | SVG・HTML は拒否（400）。中身が SVG のファイルは `image/svg+xml` + `Content-Disposition: attachment` でダウンロード扱い。全メディアに `X-Content-Type-Options: nosniff` と制限的 CSP（`sandbox; default-src 'none'`）。配信 Content-Type はバイトを見て決める |
 | 5-4 | 管理画面と API の HTTP 防御 | 別 origin から状態変更が拒否される。Cookie が HttpOnly/Secure/SameSite。CSP が付く | 合格（HSTS はプロキシ） | Cookie 認証の書き込みは `X-EmDash-Request` ヘッダ必須（単純なクロスサイトフォームは送れない）。セッション Cookie は HttpOnly/Secure/SameSite=Lax。CSP・nosniff・`frame-ancestors 'none'`・`no-store` あり。HSTS は無し（TLS 終端のプロキシで付ける前提） |
 | 5-5 | ログインと magic link の総当たり対策（プロキシ配下想定） | 一定回数で制限。プロキシ配下でも IP 単位で効く設定がある | 合格（対策込み） | 仕組みはある（passkey options 10回/60秒 等）が、EmDash 既定では IP が解決できず素通りした。`trustedProxyHeaders: ["x-forwarded-for"]` を **astro.config に焼き込んだ**ので、env 変数なしで転送元 IP 単位で効く。ただし Node ポートはプロキシ経由のみ到達可能にする必要がある（127.0.0.1 バインド/ファイアウォール。直叩きだと x-forwarded-for を詐称できる） |
 | 5-6 | 依存パッケージの脆弱性 | `pnpm audit` で high 以上の未対処が無い。更新を追う手順がある | **不合格（可用性のみ・方針で受容）** | 下記。EmDash が zod 4.5.4（CVE-2023-54404、high）を固定。override で audit は clean にできるが、**一般メンバーが 1 リクエストで CMS を落とせる経路は zod を上げても残る**。ただし偶発では踏めず、手で細工した書き込みが要る（下記）。50人の信頼コミュニティでは「性善説 + `restart: always` + 監査ログ」で受容、乗っ取りはセッション短縮で緩和する方針 |
-| 5-7 | 監査ログ | 誰がいつ公開・削除・権限変更したかを後から追える | 合格（対策込み） | core は `audit_logs` を MCP とエクスポート/インポートにしか書かない。そこで自前の middleware（`cms/src/security/audit-log.ts`）を足し、全書き込みを実行者・ロール・IP・パス・結果付きで stdout に構造化ログ出力した。拒否された操作（403）も記録される |
+| 5-7 | 監査ログ | 誰がいつ公開・削除・権限変更したかを後から追える | 合格（対策込み） | core は `audit_logs` を MCP とエクスポート/インポートにしか書かない。そこで自前の middleware（`cms/src/middlewares/audit-log/index.ts`）を足し、全書き込みを実行者・ロール・IP・パス・結果付きで stdout に構造化ログ出力した。拒否された操作（403）も記録される |
 
 **不合格時の扱い（要件）**: 不合格の # ごとに対策か受け入れを意思決定事項として列挙する。→ [`00-summary.md`](00-summary.md) の D10〜D13。
 
@@ -43,7 +43,7 @@
 | `/sitemap.xml`、`/sitemap-[collection].xml` | 公開サイト用 | 同上 |
 | `/_image`、`/_server-islands/*` | Astro の画像サービス・サーバーアイランド | 同上 |
 
-対策は `cms/src/security/public-surface.ts`（`src/middleware.ts` で Discord ガードの前に実行）。**匿名のときだけ** 404 を返す。管理画面自身はこれらの一部（画像サービス、検索など）をセッション付きで使うため、認証済みは通す。
+対策は `cms/src/middlewares/public-surface/index.ts`（`src/middleware.ts` で Discord ガードの前に実行）。**匿名のときだけ** 404 を返す。管理画面自身はこれらの一部（画像サービス、検索など）をセッション付きで使うため、認証済みは通す。
 
 残す（必要な）未認証ルート: Discord の login/callback、passkey の options/verify、magic-link の verify（運営ログインと cold-standby）、`/_emdash/api/auth/mode`、`/_emdash/api/health`、`/robots.txt`、メディアファイル本体（5-3 で別途防御）。
 
@@ -94,7 +94,7 @@ EmDash のメディア配信は次のように多層で守られている（確�
 core の `audit_logs` テーブルは存在し列も揃う（`actor_id` / `actor_ip` / `action` / `resource_*` / `status`）が、core が書くのは MCP 呼び出しとエクスポート/インポートだけ。公開・削除・ロール変更・ログインは記録されない（検証でも操作後に 0 件）。
 
 フックは使えなかった: publish/delete 後の `after*` フックには**実行者が含まれず**、ロール変更にはフック自体が無い。
-そこで自前の middleware（`cms/src/security/audit-log.ts`）を足した。
+そこで自前の middleware（`cms/src/middlewares/audit-log/index.ts`）を足した。
 
 - 全書き込み（POST/PUT/PATCH/DELETE）と認証系リクエストを、1 行の構造化 JSON で stdout に出す: 時刻・実行者 ID・ロール・クライアント IP・メソッド・パス・結果ステータス・所要時間
 - EmDash の認証 middleware の後に走るので `locals.user`（ID・ロール）が取れる。**拒否された操作（403）も記録される**（内部犯の未遂も残る）
@@ -110,7 +110,7 @@ core の `audit_logs` テーブルは存在し列も揃う（`actor_id` / `actor
 
 | 種類 | 置き場所 | 例 |
 |---|---|---|
-| セキュリティ設定（非秘密） | **ビルド焼き込み**（astro.config / src/security / provider config） | 塞ぐルート一覧、`mcp:false`、`trustedProxyHeaders`、セッション有効期限 1h 既定、CSP、監査ログ |
+| セキュリティ設定（非秘密） | **ビルド焼き込み**（astro.config / src/middlewares / provider config） | 塞ぐルート一覧、`mcp:false`、`trustedProxyHeaders`、セッション有効期限 1h 既定、CSP、監査ログ |
 | デプロイ固有の識別子（非秘密） | env | `EMDASH_SITE_URL`、`DISCORD_GUILD_ID`、ロール ID、`DISCORD_CLIENT_ID` |
 | 秘密 | 実行時にファイル / Docker・systemd secret から読む（env にも載せない） | `EMDASH_ENCRYPTION_KEY`、`DISCORD_CLIENT_SECRET`、Bot Token、各種トークン |
 
@@ -119,9 +119,9 @@ core の `audit_logs` テーブルは存在し列も揃う（`actor_id` / `actor
 
 ## この項目で入れた対策（サンドボックス）
 
-- `cms/src/security/public-surface.ts` + `src/middleware.ts`: 匿名の不要ルートを 404（5-1）
+- `cms/src/middlewares/public-surface/index.ts` + `src/middleware.ts`: 匿名の不要ルートを 404（5-1）
 - `cms/astro.config.mjs`: `mcp: false`（5-1）、`trustedProxyHeaders: ["x-forwarded-for"]`（5-5 を env なしで有効化）
-- `cms/src/security/audit-log.ts`: 全書き込みの監査ログ（5-7）
+- `cms/src/middlewares/audit-log/index.ts`: 全書き込みの監査ログ（5-7）
 - `providers/discord/src/config.ts`: セッション有効期限の既定を 12h→1h に焼き込み（乗っ取り窓の短縮、5-6）
 - `cms/package.json`: `pnpm.overrides.zod = 4.6.7`（5-6 の audit を clean に。ただしメンバー crash は残る）
 - `cms/.env.example`: 秘密・識別子・焼き込み済み既定を分類し、秘密はファイル/secret で渡すことを明記

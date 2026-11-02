@@ -158,7 +158,7 @@ try {
 	R.note("5-6c", "override in place", `cms/package.json pnpm.overrides = ${JSON.stringify(pkg.pnpm?.overrides ?? {})}`);
 
 	// -------------------------------------------------------------------------
-	// 5-7 audit trail (request-level log to stdout, cms/src/security/audit-log.ts)
+	// 5-7 audit trail (request-level log to stdout, cms/src/middlewares/audit-log/index.ts)
 	// -------------------------------------------------------------------------
 	const leaderRow = (await admin.get("/_emdash/api/admin/users")).json.data.items.find((u) => u.email === USERS.member.email);
 	const pub = await createEntry(admin, "articles", { title: "audit", body: [block("a", "x")] });
@@ -174,7 +174,7 @@ try {
 	const blockedLine = done.find((l) => l.method === "DELETE" && l.status === 403);
 	const attributed = (l) => l && typeof l.actor === "string" && l.actor !== "anonymous" && !!l.ip && l.role != null;
 	R.check("5-7a", "every write is attributed in the audit log (actor id, role, IP, path, outcome)", attributed(delLine) && attributed(roleLine) && (blockedLine ? attributed(blockedLine) : true) && started.length > 0, `delete→${delLine?.actor}/${delLine?.status} role-change→${roleLine?.actor}/${roleLine?.status} member-blocked-delete→${blockedLine?.actor}/${blockedLine?.status}; ${done.length} write lines, ${started.length} pre-handler 'start' lines`);
-	R.note("5-7b", "placement and scope", "logged in middleware (cms/src/security/audit-log.ts), not EmDash hooks — the after-publish/delete hooks omit the actor. Covers content/media/schema/settings/admin/auth/setup writes, including refused (403) attempts. Core's own audit_logs table stays for MCP/transfer only. Ship these JSON lines off the box so an insider cannot edit them. For the crash case (5-6) the app log is best-effort — a SIGKILL can drop buffered stdout — so the forensic record of a crashing request is the reverse proxy's access log, which must be enabled.");
+	R.note("5-7b", "placement and scope", "logged in middleware (cms/src/middlewares/audit-log/index.ts), not EmDash hooks — the after-publish/delete hooks omit the actor. Covers content/media/schema/settings/admin/auth/setup writes, including refused (403) attempts. Core's own audit_logs table stays for MCP/transfer only. Ship these JSON lines off the box so an insider cannot edit them. For the crash case (5-6) the app log is best-effort — a SIGKILL can drop buffered stdout — so the forensic record of a crashing request is the reverse proxy's access log, which must be enabled.");
 } catch (e) {
 	console.error(e);
 	R.check("error", "script error", false, e.stack?.split("\n").slice(0, 3).join(" "));
