@@ -12,7 +12,7 @@ export function imageDimensions() {
 	return {
 		id: "image-dimensions",
 		version: "0.0.0",
-		capabilities: ["content:read", "schema:read", "media:read"],
+		capabilities: ["content:write", "schema:read", "media:read"],
 		entrypoint: fileURLToPath(new URL("./index.ts", import.meta.url)),
 	};
 }

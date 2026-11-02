@@ -18,7 +18,7 @@ export function webpOnly() {
 	return {
 		id: "webp-only",
 		version: "0.0.0",
-		capabilities: ["media:read"],
+		capabilities: ["media:write"],
 		entrypoint: fileURLToPath(new URL("./index.ts", import.meta.url)),
 		adminEntry: fileURLToPath(new URL("./admin.tsx", import.meta.url)),
 	};

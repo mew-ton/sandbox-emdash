@@ -13,7 +13,7 @@ export function portableTextPolicy() {
 	return {
 		id: "portable-text-policy",
 		version: "0.0.0",
-		capabilities: ["content:read", "schema:read"],
+		capabilities: ["content:write", "schema:read"],
 		entrypoint: fileURLToPath(new URL("./index.ts", import.meta.url)),
 	};
 }

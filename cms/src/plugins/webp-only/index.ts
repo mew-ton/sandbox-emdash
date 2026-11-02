@@ -32,9 +32,10 @@ export function createPlugin() {
 	return definePlugin({
 		id: "webp-only",
 		version: "0.0.0",
-		// media:read — media hooks are skipped unless the plugin declares read
-		// access, the same way content hooks need content:read.
-		capabilities: ["media:read"],
+		// media:write — what media:beforeUpload requires, even though this plugin
+		// only refuses uploads and writes nothing. media:read is the requirement for
+		// media:afterUpload; with that declared instead, the gate never ran.
+		capabilities: ["media:write"],
 		/**
 		 * The sidebar entry for the converter page.
 		 *

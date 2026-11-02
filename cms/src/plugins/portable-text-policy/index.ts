@@ -150,9 +150,10 @@ export function createPlugin() {
 	return definePlugin({
 		id: "portable-text-policy",
 		version: "0.0.0",
-		// content:read — content hooks are skipped without it, as in build-trigger.
+		// content:write — what content:beforeSave requires; the hook is skipped
+		//   without it. content:read is what the after* hooks need, not this one.
 		// schema:read  — ctx.schema.getCollection() carries each field's `options`.
-		capabilities: ["content:read", "schema:read"],
+		capabilities: ["content:write", "schema:read"],
 		hooks: {
 			"content:beforeSave": async (event, ctx) => {
 				const schema = ctx.schema;

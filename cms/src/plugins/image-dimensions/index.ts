@@ -71,14 +71,17 @@ export function createPlugin() {
 	return definePlugin({
 		id: "image-dimensions",
 		version: "0.0.0",
-		// content:read — content hooks are skipped without it, as in build-trigger.
+		// content:write — what content:beforeSave requires. Without it the host logs
+		//   "declares ... without ... capability — skipping" and the hook never runs.
+		//   content:read is the requirement for the after* hooks (build-trigger uses
+		//   content:afterSave); declaring that here disabled every check below.
 		// schema:read  — ctx.schema.getCollection() carries each field's `options`.
 		// media:read   — ctx.media.get() returns the record's width and height.
-		capabilities: ["content:read", "schema:read", "media:read"],
+		capabilities: ["content:write", "schema:read", "media:read"],
 		hooks: {
 			"content:beforeSave": async (event, ctx) => {
-				// Both are absent unless the host granted the capability, and
-				// capabilities are declared in astro.config.mjs rather than here, so
+				// Both are absent unless the host granted the capability, and the list
+				// above can lose an entry without this hook changing, so
 				// the two can fall out of step. A rule that cannot be checked must not
 				// report success, so this refuses rather than passing the save through.
 				const { schema, media } = ctx;
