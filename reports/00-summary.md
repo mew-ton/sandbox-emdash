@@ -48,7 +48,8 @@
 
 | 項目 | 合否 | 証拠 | いつ・どのコードに対して |
 |---|---|---|---|
-| 1. headless 運用 | 1-1〜1-6 合格 / 1-7 不合格 / 1-8 一部不合格 | 自動（`verify/item1-headless.mjs`、[出力](generated/01-headless.md)） | 2026-10-25、`0c26fe4` 前後 |
+| 1. headless 運用 | 1-1〜1-6 合格 / **1-7 合格（基準を書き換え）** / 1-8 一部不合格 | 自動（`verify/item1-headless.mjs`、[出力](generated/01-headless.md)） | 2026-10-25、`0c26fe4` 前後 |
+| | 1-7 を書き込み API 経由で通し実行（12/12） | 自動（`verify/item1-transfer.mjs`、[出力](generated/01-7-transfer.md)） | 2026-11-03、`ddf8a19` |
 | 2. Discord 認証 | 2-1〜2-9 合格 | 自動（モック、[出力](generated/02-discord-auth.md)） | 2026-10-25、`0c26fe4` 前後 |
 | | 2-1・2-2 の一部・2-3 の一部 | **実機（実 Discord）** | 2026-11-03、`a964659` |
 | 3. `cms-client` | 3-3〜3-6 合格、3-1・3-2 は列挙完了 | 自動（`verify/item3-cms-client.mjs`、[出力](generated/03-cms-client.md)） | 2026-10-25、`0c26fe4` 前後 |
