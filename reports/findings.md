@@ -269,6 +269,48 @@ sharp（libvips）で変換したときのピーク RSS 増分:
 
 ---
 
+### F-26 メディアのフックは拒否の理由を伝えられない
+
+典拠: source（`plugins/hooks.ts` `runMediaBeforeUpload`、`astro/routes/api/media.ts`） / 確度: 確定（実機で確認）
+
+`media:beforeUpload` から投げた例外はアップロードを中断する（`errorPolicy` の既定は `"abort"`）が、
+ルートが `handleError(error, "Upload failed", "UPLOAD_ERROR")` で包むため、**メッセージが失われ 500 になる**。
+
+コンテンツ側には `ContentSaveRejectedError` があり、投げると `422 SAVE_REJECTED` とメッセージが編集者まで届く。
+**メディア側に相当する型が存在しない**（EmDash が持つのは `ContentSaveRejectedError` と `SandboxSaveRejectedError` だけ）。
+
+プラグインだけでアップロード制限を作ると、編集者には「Upload failed」しか出ない。
+対策として `middlewares/webp-upload-message/` がルートの手前で同じ規則を適用し、400 とメッセージを返している。
+
+### F-27 アップロードの許可形式は経路によって別の仕組みが見る
+
+典拠: source（`api/handlers/media-allowlist.ts`、`astro/routes/api/media.ts`） / 確度: 確定（実機で確認）
+
+EmDash は許可リストを `fieldAllowlist ?? GLOBAL_UPLOAD_ALLOWLIST` で解決し、
+**フォームに `fieldId` が入っているときだけ**フィールドの `allowedMimeTypes` を使う。
+
+| 経路 | 使われる許可リスト |
+|---|---|
+| エントリ編集画面のフィールドから | そのフィールドの `allowedMimeTypes`（seed で宣言できる） |
+| メディアページから | `GLOBAL_UPLOAD_ALLOWLIST` |
+
+`GLOBAL_UPLOAD_ALLOWLIST` は png・jpeg・gif・webp・avif・jxl・video/・audio/・pdf を含む**ハードコードの定数**で、
+設定でも env でも変えられない。SVG が既定で外れているのは意図的（アップロード時の内容検査が無いため）。
+
+したがって **seed の `allowedMimeTypes` だけではメディアページ経由を塞げない**。
+
+### F-28 EmDash 1.3.1 のビルド成果物に `setInterval` が無い
+
+典拠: source（`node_modules/emdash/dist/` 全体の走査） / 確度: 確定
+
+周期的な `setTimeout` も見つからない。予約投稿はクエリ時に可視になる方式で（公開時刻を過ぎても書き込みイベントは発火しない）、
+`deferred-tasks.ts` もリクエスト後に走る仕組みである。
+
+つまり**真に待機中はプロセス内で動くものが無い**。2 つの帰結がある。
+
+- 要件 4-6 が想定した「スケジューラによる増加」は 1.3.1 では成立しない。それでも 0.13 MiB/時 の増加は観測された（原因未特定）。
+- **定期再起動が何も取りこぼさない。** cron 方式のスケジューラを持つ CMS なら再起動が発火ウィンドウを跨ぐと予約投稿を落とすが、その危険がない。
+
 ## 更新時に見る場所
 
 これらの所見のうち、EmDash の更新で壊れうるものと、その検出手段。D6 の具体化。
@@ -281,5 +323,8 @@ sharp（libvips）で変換したときのピーク RSS 増分:
 | Portable Text のキー（F-20） | `portable-text-policy` が未知キーを拒否 | 保存時にメッセージが出る |
 | プラグインが import するホストの型（F-12） | `pnpm check` | 型エラー |
 | 装飾キーのカタログ（F-05 / F-20） | 同上 + 未知キーの拒否 | 新しい装飾が拒否される |
+| メディアのエラー型（F-26） | `verify/item6-content-constraints.mjs` の 6-3b | 相当する型が入れば中間層を外せる |
+| 許可形式の解決順（F-27） | 同上 6-3a / 6-3c | どちらかの経路が通るようになる |
+| 周期実行の不在（F-28） | `grep -r setInterval node_modules/emdash/dist/` | 再起動が予約投稿を落としうる状態になる |
 
 F-20 の仕組みは、更新で増えた装飾を**黙って許可せず、メッセージとして出す**。他の所見にも同種の作りを広げる価値がある。

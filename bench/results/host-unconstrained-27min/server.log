@@ -1,0 +1,4 @@
+01:35:14 [@astrojs/node] Server listening on http://127.0.0.1:4342
+[hooks] Plugin "image-dimensions" declares content:beforeSave hook without content:write capability — skipping
+[hooks] Plugin "webp-only" declares media:beforeUpload hook without media:write capability — skipping
+[hooks] Plugin "portable-text-policy" declares content:beforeSave hook without content:write capability — skipping

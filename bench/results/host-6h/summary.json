@@ -1,0 +1,16 @@
+{
+  "note": "complete",
+  "memory_max": "367001600",
+  "samples": 21502,
+  "seconds": 21601,
+  "first_mib": 154.27734375,
+  "last_mib": 154.578125,
+  "min_mib": 150.765625,
+  "max_mib": 154.578125,
+  "peak_vmhwm_mib": 155.43359375,
+  "peak_procs_rss_mib": 154.578125,
+  "peak_current_mib": 59.81640625,
+  "oom_kill": 0,
+  "slope_mib_per_hour_all": 0.27943794068517147,
+  "slope_mib_per_hour_after_warmup": 0.17241376529161132
+}
