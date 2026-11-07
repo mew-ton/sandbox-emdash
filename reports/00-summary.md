@@ -48,7 +48,7 @@
 
 | 項目 | 合否 | 証拠 | いつ・どのコードに対して |
 |---|---|---|---|
-| 1. headless 運用 | 1-1〜1-6 合格 / **1-7 合格（基準を書き換え）** / 1-8 一部不合格 | 自動（`verify/item1-headless.mjs`、[出力](generated/01-headless.md)） | 2026-10-25、`0c26fe4` 前後 |
+| 1. headless 運用 | 1-1〜1-7 合格（1-7 は基準を書き換え）/ **1-8 は取り下げ** | 自動（`verify/item1-headless.mjs`、[出力](generated/01-headless.md)） | 2026-10-25、`0c26fe4` 前後 |
 | | 1-7 を書き込み API 経由で通し実行（12/12） | 自動（`verify/item1-transfer.mjs`、[出力](generated/01-7-transfer.md)） | 2026-11-03、`ddf8a19` |
 | 2. Discord 認証 | 2-1〜2-9 合格 | 自動（モック、[出力](generated/02-discord-auth.md)） | 2026-10-25、`0c26fe4` 前後 |
 | | 2-1・2-2 の一部・2-3 の一部 | **実機（実 Discord）** | 2026-11-03、`a964659` |
@@ -56,7 +56,7 @@
 | 4. メモリ | 4-1〜4-5 合格 / **4-6 不合格（対策で運用可）** / 4-7 記録のみ | 計測（`bench/`、グラフは `assets/`） | 2026-10-25 前後 |
 | | 4-6 を 6 時間完走（350M 制限下、`bench/results/host-6h`） | 計測 | 2026-11-03、`2f53532` |
 | 6. コンテンツ制約 | 6-1〜6-4・6-6・6-7 合格（16/16）/ 6-5・6-8 未実施 | 自動（`verify/item6-content-constraints.mjs`、[出力](generated/06-content-constraints.md)） | 2026-11-03、`ef557da` |
-| 5. セキュリティ | 5-1〜5-4・5-7 合格（対策込み）/ 5-5 要設定 / 5-6 不合格 | 自動（`verify/item5-security.mjs`、[出力](generated/05-security.md)） | 2026-10-26、`5ab7c4f` 前後 |
+| 5. セキュリティ | **5-1〜5-5・5-7 合格 / 5-6 不合格（D22 で受け入れ）** | 自動（`verify/item5-security.mjs`、[出力](generated/05-security.md)） | **2026-11-07 に再実行、不合格 0 件** |
 | | 5-6 の `pnpm audit` | 実機 | 2026-11-03、`52e8798` |
 
 ### 本日の変更が以前の証拠に対して持つ意味

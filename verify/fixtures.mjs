@@ -1,7 +1,15 @@
 /**
  * Content fixtures for item 3 (and the item 4 load scripts).
+ *
+ * Uploads are WebP. Only WebP reaches the disk on this server (requirement 6-3),
+ * enforced by plugins/webp-only and middlewares/webp-upload-message, so fixtures
+ * that upload PNG are refused — as they should be. `png()` stays exported for
+ * the tests whose subject *is* the refusal (6-3) or a dangerous type (5-3).
  */
 
+import { globSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { deflateSync } from "node:zlib";
 
 const crcTable = Array.from({ length: 256 }, (_, n) => {
@@ -47,9 +55,54 @@ export function png(w, h, seed = 1, { noise = false } = {}) {
 	]);
 }
 
-export async function upload(client, name, bytes, alt = `alt of ${name}`) {
+/**
+ * A valid WebP of exactly w x h.
+ *
+ * sharp is a transitive dependency of EmDash, so pnpm does not put it in
+ * cms/node_modules; its store directory carries the resolved version and a peer
+ * hash, which this matches without pinning either. Using it here does not
+ * contradict 6-5 (no conversion on the CMS server): this is test tooling.
+ *
+ * `seed` changes the pixels, which matters because EmDash deduplicates media by
+ * content hash — fixtures meant to be separate files must not encode alike.
+ * `noise` makes the result incompressible, for uploads with a size target.
+ */
+let sharpModule = null;
+export async function webp(w, h, seed = 1, { noise = false } = {}) {
+	if (!sharpModule) {
+		const cmsDir = join(dirname(fileURLToPath(import.meta.url)), "../cms");
+		const [entry] = globSync("node_modules/.pnpm/sharp@*/node_modules/sharp/dist/index.cjs", { cwd: cmsDir });
+		if (!entry) throw new Error("sharp was not found in cms/node_modules/.pnpm — run pnpm install in cms/");
+		sharpModule = (await import(pathToFileURL(join(cmsDir, entry)).href)).default;
+	}
+	// xorshift32 with Math.imul, not the LCG png() uses: that one loses precision
+	// past 2^53 and degenerates, and png() hid it by deflating at level 0 — the
+	// 5 MiB it produced was uncompressed, not incompressible. A lossless WebP
+	// encoder has no such switch, so the bytes themselves have to be random.
+	let state = Math.imul(seed, 2654435761) | 0 || 1;
+	const rnd = () => {
+		state ^= state << 13;
+		state ^= state >>> 17;
+		state ^= state << 5;
+		state |= 0;
+		return (state >>> 24) & 255;
+	};
+	const raw = Buffer.alloc(w * h * 3);
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			raw.set(noise ? [rnd(), rnd(), rnd()] : [(x * 4 + seed) & 255, (y * 5) & 255, (seed * 40) & 255], (y * w + x) * 3);
+		}
+	}
+	// Lossless for the noise case: a lossy encoder would throw the bytes away
+	// and with them the file size the caller asked for.
+	return sharpModule(raw, { raw: { width: w, height: h, channels: 3 } })
+		.webp(noise ? { lossless: true } : { quality: 90 })
+		.toBuffer();
+}
+
+export async function upload(client, name, bytes, alt = `alt of ${name}`, type = "image/webp") {
 	const fd = new FormData();
-	fd.append("file", new Blob([bytes], { type: "image/png" }), name);
+	fd.append("file", new Blob([bytes], { type }), name);
 	fd.append("alt", alt);
 	const r = await client.request("POST", "/_emdash/api/media", { body: fd });
 	if (r.status !== 201) throw new Error(`upload ${name} failed: ${r.status} ${r.text}`);
@@ -76,11 +129,26 @@ export async function createEntry(client, collection, data, { publish = true } =
 }
 
 /** Articles and casts covering every field conversion the client performs. */
+/**
+ * The size casts.avatar and casts.banner declare, read from the seed so a change
+ * there fails the fixtures rather than silently diverging from them.
+ */
+export const CAST_IMAGE = (() => {
+	const seedPath = join(dirname(fileURLToPath(import.meta.url)), "../cms/seed/seed.json");
+	const seed = JSON.parse(readFileSync(seedPath, "utf8"));
+	const field = seed.collections.find((c) => c.slug === "casts")?.fields.find((f) => f.slug === "avatar");
+	if (!field?.options?.width) throw new Error("casts.avatar has no options.width in cms/seed/seed.json");
+	return { width: field.options.width, height: field.options.height };
+})();
+
 export async function seedSiteContent(admin) {
-	const hero = await upload(admin, "hero.png", png(320, 200, 3), "Hero image alt");
-	const inline = await upload(admin, "inline.png", png(160, 100, 5), "Inline image alt");
-	const avatar = await upload(admin, "avatar.png", png(128, 128, 7), "Avatar alt");
-	const banner = await upload(admin, "banner.png", png(600, 150, 9), "Banner alt");
+	const hero = await upload(admin, "hero.webp", await webp(320, 200, 3), "Hero image alt");
+	const inline = await upload(admin, "inline.webp", await webp(160, 100, 5), "Inline image alt");
+	// casts.avatar and casts.banner declare options.width/height in seed.json and
+	// image-dimensions refuses anything else, so these are the real frame size.
+	// articles.hero_image declares none, so hero/inline stay small and cheap.
+	const avatar = await upload(admin, "avatar.webp", await webp(CAST_IMAGE.width, CAST_IMAGE.height, 7), "Avatar alt");
+	const banner = await upload(admin, "banner.webp", await webp(CAST_IMAGE.width, CAST_IMAGE.height, 9), "Banner alt");
 	const articles = [];
 	articles.push(
 		await createEntry(admin, "articles", {

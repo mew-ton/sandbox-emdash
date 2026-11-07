@@ -97,7 +97,20 @@ try {
 	const svg = await upload("e.svg", "image/svg+xml", "<svg xmlns='http://www.w3.org/2000/svg' onload='alert(1)'></svg>");
 	const htmlAsPng = await upload("e.png", "image/png", "<html><script>alert(1)</script></html>");
 	const svgAsPng = await upload("e2.svg", "image/png", "<svg xmlns='http://www.w3.org/2000/svg' onload='alert(1)'></svg>");
-	R.check("5-3a", "SVG/HTML uploads are rejected or served non-executably", svg.rejected === 400 && htmlAsPng.nosniff === "nosniff" && htmlAsPng.disposition === "inline" && /sandbox/.test(htmlAsPng.csp ?? "") && svgAsPng.disposition === "attachment", `svg=${JSON.stringify(svg)} htmlAsPng=${JSON.stringify(htmlAsPng)} svgAsPng.disposition=${svgAsPng.disposition}`);
+	// Each file passes by being refused, or by being served in a way that cannot
+	// execute. Since the WebP-only rule (6-3) these are refused at the edge
+	// before EmDash sniffs them, which is the stronger outcome of the two — the
+	// check used to require the serving behaviour and so failed when the upload
+	// stopped happening at all.
+	const safelyHandled = (r) =>
+		r.rejected >= 400 ||
+		(r.nosniff === "nosniff" && (r.disposition === "attachment" || (r.disposition === "inline" && /sandbox/.test(r.csp ?? ""))));
+	R.check(
+		"5-3a",
+		"SVG/HTML uploads are rejected or served non-executably",
+		safelyHandled(svg) && safelyHandled(htmlAsPng) && safelyHandled(svgAsPng),
+		`svg=${JSON.stringify(svg)} htmlAsPng=${JSON.stringify(htmlAsPng)} svgAsPng=${JSON.stringify(svgAsPng)}`,
+	);
 	R.note("5-3b", "how it is defended", "the media route sets Content-Type by sniffing bytes (not the client type), X-Content-Type-Options: nosniff, a restrictive CSP (sandbox; default-src 'none'), and Content-Disposition: attachment for anything but real images. A file whose bytes are SVG is served as image/svg+xml with attachment, so it downloads rather than executes.");
 
 	// -------------------------------------------------------------------------
@@ -153,9 +166,18 @@ try {
 	};
 	const cmsAudit = auditOf("cms").metadata.vulnerabilities;
 	R.check("5-6a", "pnpm audit (prod) reports no high/critical in cms/ after the zod override", (cmsAudit.high ?? 0) === 0 && (cmsAudit.critical ?? 0) === 0, JSON.stringify(cmsAudit));
-	const pkg = JSON.parse(readFileSync(`${ROOT}/cms/package.json`, "utf8"));
+	// pnpm 10 reads overrides from pnpm-workspace.yaml, not package.json#pnpm,
+	// so reading the old location reported an empty object and looked like the
+	// protection had been dropped.
+	const workspace = readFileSync(`${ROOT}/cms/pnpm-workspace.yaml`, "utf8");
+	const overrides = [...workspace.matchAll(/^\s{2,}([a-z0-9@/._-]+):\s*(\S+)/gim)].map((m) => `${m[1]}@${m[2]}`);
 	R.note("5-6b", "member-reachable crash NOT fixed by the audit", "The zod override clears the pnpm-audit high (CVE-2023-54404), but a member can still crash the CMS with a content write whose array field fails validation (~2 MiB body, exit 139), with zod at 4.6.7. See bench/security/dos-poc.mjs and the report. The override only takes effect on a clean install; an incremental install leaves the vulnerable copy while pnpm audit reads clean from package.json.");
-	R.note("5-6c", "override in place", `cms/package.json pnpm.overrides = ${JSON.stringify(pkg.pnpm?.overrides ?? {})}`);
+	R.check(
+		"5-6c",
+		"the zod override is where pnpm 10 reads it, and reaches the production image",
+		overrides.some((o) => o.startsWith("zod@")) && /pnpm-workspace\.yaml/.test(readFileSync(`${ROOT}/bench/prepare.sh`, "utf8")),
+		`cms/pnpm-workspace.yaml overrides = ${overrides.join(", ") || "(none)"}; bench/prepare.sh stages it = ${/pnpm-workspace\.yaml/.test(readFileSync(`${ROOT}/bench/prepare.sh`, "utf8"))}`,
+	);
 
 	// -------------------------------------------------------------------------
 	// 5-7 audit trail (request-level log to stdout, cms/src/middlewares/audit-log/index.ts)
