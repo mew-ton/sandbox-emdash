@@ -175,6 +175,22 @@ Subscriber のトークンでは、`status` パラメータに何を指定して
 - フックは応答を返した後に実行される
 - dispatch の失敗時に再試行はしない（失敗はログのみ）
 
+**保存時に任意の webhook を飛ばせる**（2026-11-07 追記）。1-5 が確かめたのは GitHub の
+`repository_dispatch` だが、やっていることは `content:afterPublish` / `afterUnpublish` /
+`afterDelete` から `fetch` を呼ぶことで、宛先は URL と本文の形だけの違いである。
+
+| 宛先 | 必要なもの |
+|---|---|
+| GitHub | token + `{ event_type, client_payload }` |
+| Discord | **webhook URL のみ**（認証なし）+ `{ content }` |
+
+Discord のほうが単純で、新しい能力を要しない。したがって「保存時に Discord / GitHub へ
+それぞれ webhook を飛ばせるか」という懸念は 1-5 の合格で閉じている。必要になった時点で
+`build-trigger` と同じ形のフックを 1 つ足すだけでよい。
+
+**プロセスの死活通知は別物**で、フックでは扱えない（落ちる瞬間にフックは走らない）。
+そちらは監視側の責務とした（[D22](../docs/decisions.md#d22-メンバーが落とせるクラッシュ5-6をどう扱うか)）。
+
 ### 1-6 スキーマのコード管理
 
 - 初期スキーマは `cms/seed/seed.json`。空の DB での初回起動時に適用される（seed はビルドに埋め込まれる）

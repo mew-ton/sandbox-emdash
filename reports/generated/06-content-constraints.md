@@ -1,6 +1,6 @@
 # 項目 6: コンテンツの制約（寸法・保存形式・本文）
 
-実行: 2026-11-02T18:01:55.085Z / 生成: `verify/item6-content-constraints.mjs`
+実行: 2026-11-07T05:21:29.538Z / 生成: `verify/item6-content-constraints.mjs`
 
 制約は `cms/seed/seed.json` の宣言から読み、スクリプト側に値を持たない。
 casts.avatar = 3840x2160、articles.body = {"allowedTypes":["block","image"],"allowedStyles":["normal","h2","h3","h4"],"allowedMarks":["strong","em","link"],"allowedLists":["bullet","number"]}

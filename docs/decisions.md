@@ -132,25 +132,72 @@ TypeScript は 6 系に固定する。`@astrojs/check` の peer が `^5.0.0 || ^
 ## D22. メンバーが落とせるクラッシュ（5-6）をどう扱うか
 
 関連する要件: 5-6
-状態: **決定済み（2026-11-03）**
+状態: **決定済み（2026-11-03、実装方針を 2026-11-07 に差し替え）**
 
 **決定**: 防がない。`restart: always` で復帰させ、**落ちたことを Discord に通知する**。編集中の未保存データは救わない。
+通知は **CMS の外、死活を監視する側**が行う。
 
 **理由**: 企業向けサービスではなく、編集者は数人の身内である。クラッシュ経路を塞ぐより、起きたことが分かる状態を作るほうが費用対効果が高い。復帰は自動で、未保存の作業が失われることは許容する。
 
 通知がないと**落ちたこと自体に気づけない**。閲覧者は静的サイトを見ているため影響がなく、編集者が次に触るまで誰も気づかない。繰り返されている場合に手を打てないのが問題だった。
 
-**実装**: `cms/src/plugins/crash-notice/`。`DISCORD_ALERT_WEBHOOK_URL` が設定されているときだけ動く。
+### 実装: journal を追う監視プロセス
 
-**計画再起動（D21 の毎日 7:00）では鳴らない。** SIGTERM を受けるとデータ領域に `clean-exit.json` を書いて終了し、次の起動がそれを見つければ想定内と判断する。マーカーが無ければ前回が異常終了だったと判断して通知する。この方式は **SIGKILL や OOM のようにハンドラが走れない停止も捕捉できる**。
+本番 VPS の構築は要件 §4 で範囲外なので、要件は「**監視側が予期しない終了を通知すること**」とし、以下を検証済みの参照実装として示す。
 
-通知は 2 経路あり、通常はクラッシュ 1 回につき両方から出る。
+CMS を systemd 管理下に置く（コンテナ運用なら quadlet か `podman generate systemd` で同じユニット配下に入れる）。そのうえで、**別ユニットとして** journal を追る監視を常駐させる。
 
-- `uncaughtException` / `unhandledRejection`: その場でエラー種別を通知してから終了する。失われることがある
-- 次回の起動: 前回が正常終了していないことを報告する。失われない
+```
+journalctl -f -n0 -o cat -u emdash-cms.service \
+  | grep --line-buffered -E "Failed with result|restart counter is at" \
+  | （1 行ごとに Discord の webhook へ POST する）
+```
 
-**留意**
+監視自身も `Restart=always` の systemd ユニットにする。
 
-- プラグインの初期化が**最初のリクエストまで遅延する**（EmDash が起動時に `createPlugin()` を呼ばない）。リクエストが 1 本も来ないまま停止した場合、マーカーが書かれず次回に誤検知が出る。実害は通知 1 回の空振り。
-- エラー文は**クラス名と 1 行目だけ**を 200 文字で切って送る。例外にはリクエストの値が混じりうるため、全文はコンテナのログと監査ログに残し、チャンネルには出さない。
-- この決定は 5-6 の不合格を**受け入れる**ものである。上流に報告する価値はあるが、採用判定には間に合わない。
+### なぜ `ExecStopPost` ではないのか
+
+最初は `ExecStopPost` を使う前提だった。`$SERVICE_RESULT` / `$EXIT_CODE` / `$EXIT_STATUS` が環境に入るため、正常停止と異常終了を区別できる。実測（2026-11-07）:
+
+| ケース | `SERVICE_RESULT` / `EXIT_CODE` / `EXIT_STATUS` | 通知 |
+|---|---|---|
+| `exit 0` | `success` / `exited` / `0` | 届いた（＝計画再起動では黙る） |
+| `exit 3` | `exit-code` / `exited` / `3` | 届いた |
+| SIGKILL | `signal` / `killed` / `KILL` | 届いた |
+| **OOM kill** | （`oom-kill`） | **届かない** |
+
+**OOM では `ExecStopPost` 自身が殺される。** `ExecStopPost` はユニットと同じ cgroup で動き、systemd は OOM 時に既定の `OOMPolicy=stop` で cgroup 内の残りプロセスへ SIGKILL を送る。
+
+```
+v-oom.service: The kernel OOM killer killed some processes in this unit.
+v-oom.service: Killing process 5543 (9) with signal SIGKILL.   ← ExecStopPost
+v-oom.service: Control process exited, code=killed, status=9/KILL
+v-oom.service: Failed with result 'oom-kill'.
+```
+
+`sleep` で 1 秒・3 秒の猶予を与えても届かなかった。メモリ競合ではなく systemd の方針なので、待っても解決しない。
+
+`OnFailure=` も代わりにならない。`Restart=always` のとき各クラッシュではユニットが `failed` に入らず、**起動制限を超えた時点でのみ** `failed`（`Result=start-limit-hit`）になる。つまり `OnFailure` は「再起動を諦めた」ときだけ発火する。
+
+**4-6 と 4-2 の計測を踏まえると OOM は現実的なケース**（待機時 0.13 MiB/時 の増加、編集 30 分で 27 MiB 増）なので、OOM を取りこぼす方式は採れない。journal 監視は別 cgroup で動くため、`oom-kill` も `signal` も `start-limit-hit` も捕まえられる（実測で確認）。
+
+### 計画再起動（D21 の毎日 7:00）では鳴らない
+
+`systemctl restart` は正常停止なので journal に `Failed with result` が出ない。上の grep に一致しないため通知されない。
+
+### この方針で試して捨てた実装
+
+当初は EmDash のプラグイン（`cms/src/plugins/crash-notice/`）として実装し、`uncaughtException` でその場に通知し、正常終了時にマーカーファイルを書いて次回起動で不在を検知する形にした。**層が違うので捨てた**（2026-11-07 に削除）。
+
+- プロセスの死活は監視する側が見るもので、死ぬ当人に委ねると最も不確実なタイミングに依存する
+- EmDash は最初のリクエストまで `createPlugin()` を呼ばない（F-29）ため初期化が遅延し、リクエストが来ないまま停止すると空振りの通知が出た
+- SIGKILL・OOM・ホスト停止ではハンドラが走れず、マーカーファイルによる間接検知に頼っていた
+
+同じ判断を繰り返さないために残す。**アプリ内に死活監視を置かない。**
+
+### 留意
+
+- 監視側は終了ステータスしか見えず、例外のクラス名は分からない。詳細は `journalctl -u emdash-cms` から取る。例外文にはリクエストの値が混じりうるため、チャンネルに出さない方針とは整合する
+- ホストごと落ちた場合は何も通知されない。外部からの監視が必要になるが、範囲外とする
+- 監視プロセス自身の死活は systemd の `Restart=always` に委ねる
+- この決定は 5-6 の不合格を**受け入れる**ものである。クラッシュ経路そのものは塞いでいない。上流への報告は別途

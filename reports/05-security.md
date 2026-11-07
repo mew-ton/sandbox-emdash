@@ -22,28 +22,50 @@
 - `5-3a`: SVG/HTML のアップロードが**全部 400 で拒否される**ようになった（WebP 制限が EmDash の判定より前に効く）。検査は「配信時の `Content-Disposition`」を見ようとして、配信されないため失敗していた。拒否も安全な配信も合格として扱うよう直した
 - `5-6c`: zod の override を `pnpm-workspace.yaml` に移したのに、検査は `package.json#pnpm` を読んで空だと報告していた。保護が外れたように見える表示だった。現在は移設先と、`bench/prepare.sh` が本番イメージに同梱していることの両方を確認する
 
-## 5-6 のクラッシュは受け入れ、通知で補う（2026-11-03）
+## 5-6 のクラッシュは受け入れ、通知で補う（2026-11-03 決定 / 2026-11-07 実装差し替え）
 
 [D22](../docs/decisions.md#d22-メンバーが落とせるクラッシュ5-6をどう扱うか) で決定した。防御は入れない。`restart: always` で復帰させ、
-**落ちたことを Discord に通知する**（`cms/src/plugins/crash-notice/`、`DISCORD_ALERT_WEBHOOK_URL` が設定されているときだけ動く）。
+**落ちたことを Discord に通知する**。通知は **CMS の外、死活を監視する側**が行う。
 
-| 停止の種類 | 通知 |
-|---|---|
-| 毎日 7:00 の計画再起動（SIGTERM） | **鳴らない。** `clean-exit.json` を書いて終了し、次の起動がそれを見つける |
-| `uncaughtException` / `unhandledRejection` | その場でエラー種別を通知してから終了 |
-| SIGKILL・OOM・ホストの停止 | ハンドラは走らないが、**次回の起動がマーカーの不在から検知して通知** |
+参照実装は、CMS を systemd 管理下に置き、**別ユニット**として journal を追う監視を常駐させる形。
 
-実機で確認した（2026-11-03、ローカルの受け口に対して）:
+```
+journalctl -f -n0 -o cat -u emdash-cms.service \
+  | grep --line-buffered -E "Failed with result|restart counter is at"
+```
 
-- マーカーなしの起動 → 通知が飛ぶ
-- SIGTERM → `{"at":"...","signal":"SIGTERM"}` を記録
-- マーカーありの起動 → **通知 0 件**（計画再起動が無音であること）
-- エラー文は 1 行目のみ 200 文字で切られ、2 行目以降は送られない
+### 実測（2026-11-07、ローカルの受け口に対して）
 
-未解決として残るもの:
+`ExecStopPost` 方式と journal 監視方式を同じ停止ケースで比べた。
 
-- プラグインの初期化が最初のリクエストまで遅延する（EmDash が起動時に `createPlugin()` を呼ばない）。リクエストが来ないまま停止すると次回に空振りの通知が出る
+| 停止の種類 | `ExecStopPost` | journal 監視（別 cgroup） |
+|---|---|---|
+| 正常終了（`exit 0` / SIGTERM） | `success` → 通知しない | 何も出ない → 通知しない |
+| 異常終了（`exit 3`） | `exit-code` / `3` → 届いた | `Failed with result 'exit-code'` を捕まえた |
+| SIGKILL | `signal` / `killed` / `KILL` → 届いた | `Failed with result 'signal'` を捕まえた |
+| **OOM kill** | **届かない**（自身が殺される） | **`Failed with result 'oom-kill'` を捕まえた** |
+| 再起動の打ち切り | — | `Result=start-limit-hit` を捕まえた |
+
+**OOM で `ExecStopPost` が使えない理由**: ユニットと同じ cgroup で動くため、systemd が既定の
+`OOMPolicy=stop` で cgroup 内の残りプロセスへ SIGKILL を送る時に一緒に殺される。
+`sleep` で 1 秒・3 秒の猶予を与えても届かなかった。メモリ競合ではなく方針なので待っても解決しない。
+
+**`OnFailure=` も代わりにならない**: `Restart=always` では各クラッシュでユニットが `failed` に入らず、
+起動制限を超えた時点でのみ `failed`（`Result=start-limit-hit`）になる。
+
+4-6（待機時 0.13 MiB/時）と 4-2（編集 30 分で 27 MiB 増）を踏まえると OOM は現実的なケースなので、
+取りこぼす方式は採れない。
+
+### 計画再起動では鳴らない
+
+`systemctl restart`（D21 の毎日 7:00）は正常停止で journal に `Failed with result` が出ないため、
+上の grep に一致せず通知されない。
+
+### 未解決として残るもの
+
 - クラッシュ経路そのものは塞いでいない。上流への報告は別途
+- ホストごと落ちた場合は何も通知されない。外部からの監視が必要だが範囲外
+- 監視側は終了ステータスしか見えない。例外のクラス名は `journalctl -u emdash-cms` から取る
 
 ## 結論
 

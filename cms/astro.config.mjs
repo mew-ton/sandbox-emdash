@@ -7,7 +7,6 @@ import { defineConfig } from "astro/config";
 import emdash, { local } from "emdash/astro";
 import { sqlite } from "emdash/db";
 
-import { crashNotice } from "./src/plugins/crash-notice/descriptor.ts";
 import { imageDimensions } from "./src/plugins/image-dimensions/descriptor.ts";
 import { portableTextPolicy } from "./src/plugins/portable-text-policy/descriptor.ts";
 import { webpOnly } from "./src/plugins/webp-only/descriptor.ts";
@@ -53,12 +52,6 @@ export default defineConfig({
 				// HTML, iframes and tables to every Editor — so this refuses on save
 				// rather than hiding controls. reports/01-headless.md.
 				portableTextPolicy(),
-				// Say in Discord when the server went down unexpectedly. A signed-in
-				// member can crash it with one request and the decision is to restart
-				// rather than to defend (D22), so the requirement is to notice. Silent
-				// unless DISCORD_ALERT_WEBHOOK_URL is set, and silent on the daily
-				// restart. reports/05-security.md.
-				crashNotice(),
 			],
 			updateCheck: false,
 			// Admin UI uses system fonts: no Google Fonts fetch at build time or in the browser.
